@@ -1,0 +1,2 @@
+module ADICommunicator:
+ 	signal gnd

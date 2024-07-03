@@ -1,2 +1,2 @@
-module Bms:
+module BMS:
     signal gnd

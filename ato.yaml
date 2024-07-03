@@ -1,6 +1,34 @@
 ato-version: ^0.2.0
 builds:
   default:
-    entry: elec/src/bms.ato:Bms
+    entry: elec/src/bms.ato:BMS
+  adbms6830-devboard:
+    entry: elec/src/adbms6830-devboard.ato:Adbms6830Devboard
+  adi-communicator:
+    entry: elec/src/adi-communicator.ato:ADICommunicator
+  cell-input:
+    entry: elec/src/ADBMS6830.ato:CellInput
+  cell:
+    entry: elec/src/cell-sim.ato:Cell
+
 dependencies:
-- generics
+- name: generics
+  version_spec: '@09ad6baeaab93d53b9b6c90069ac750f4161d76f'
+  link_broken: true
+  path: elec/src/generics
+- name: rp2040
+  version_spec: '@a8c4e5cf7b1a72942f23138e11141b73be84eceb'
+  link_broken: true
+  path: elec/src/rp2040
+- name: ldk220m-r
+  version_spec: '@1c2a973953da33a23d7afdce0fa1f7fdf68dc68e'
+  link_broken: true
+  path: elec/src/ldk220m-r
+- name: saleae-header
+  version_spec: '@c2893ddaad84cd03553cd29747d3bb9e0655ef20'
+  link_broken: true
+  path: elec/src/saleae-header
+- name: usb-connectors
+  version_spec: '@53496dede5b600bd799a0afe199eaa514ebdc5f6'
+  link_broken: true
+  path: elec/src/usb-connectors

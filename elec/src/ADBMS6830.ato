@@ -1,0 +1,451 @@
+from "generics/interfaces.ato" import SPI, ISOSPI, Power, DiffPair
+from "generics/filters.ato" import DifferentialLowPassFilter, LowPassFilter
+from "generics/transistors.ato" import NPN
+from "generics/inductors.ato" import FerriteBead
+from "generics/resistors.ato" import Resistor
+from "generics/capacitors.ato" import Capacitor
+from "generics/vdivs.ato" import _VDiv
+
+module ADBMS6830:
+    """
+    16CH cell monitor with SPI and ISOSPI interfaces
+    Usage:
+    - connect cellInterfaces to the cell inputs, default 16CH
+    - depopulate unused cell inputs according to datasheet
+    - select communication interface with isomd_sw
+    - connect SPI or ISOSPI interfaces
+    """
+    ic = new _ADBMS6830MWCCSZ
+    # External interfaces
+    spi = new SPI
+    spi.mosi ~ ic.SDI
+    spi.miso ~ ic.SDO
+    spi.sck ~ ic.SCK_IPA
+    spi.cs ~ ic.CSB_IMA
+
+    iso_a = new ISOSPI
+
+    iso_a_isolation = new CapacitiveIsolation
+    iso_a_isolation.input.n ~ ic.CSB_IMA
+    iso_a_isolation.input.p ~ ic.SCK_IPA
+    iso_a_isolation.output.n ~ iso_a.n
+    iso_a_isolation.output.p ~ iso_a.p
+
+    iso_b = new ISOSPI
+    iso_b.n ~ ic.IMB
+    iso_b.p ~ ic.IPB
+
+    iso_b_isolation = new CapacitiveIsolation
+    iso_b_isolation.input.n ~ ic.IMB
+    iso_b_isolation.input.p ~ ic.IPB
+    iso_b_isolation.output.n ~ iso_b.n
+    iso_b_isolation.output.p ~ iso_b.p
+
+    vbat = new Power
+    # needs lp filter inbetween VBAT input and V+ pin
+
+    vreg = new Power
+    vreg.vcc ~ ic.VREG
+    vreg.gnd ~ ic.GND
+
+    # VREG LDO
+    npn = new NPN
+    npn -> FZT853TA
+
+    vreg_input_filter = new LowPassFilter
+    vreg_input_filter.resistor.value = 330ohm +/- 10%
+    vreg_input_filter.resistor.package = "1206"
+    vreg_input_filter.capacitor.value = 10nF +/- 20%
+    vreg_input_filter.capacitor.package = "0805"
+    vreg_input_filter.cutoff_frequency = 30kHz to 70kHz
+    # vreg_input_filter.capacitor.voltage > 100V
+
+    vreg_drive_filter = new LowPassFilter
+    vreg_drive_filter.resistor.value = 10ohm +/- 10%
+    vreg_drive_filter.resistor.package = "0402"
+    vreg_drive_filter.capacitor.value = 10nF +/- 20%
+    vreg_drive_filter.capacitor.package = "0402"
+    vreg_drive_filter.cutoff_frequency = 1MHz to 3MHz
+
+    vreg_cap = new Capacitor
+    vreg_cap.package = "0402"
+    vreg_cap.value = 1uF +/- 20%
+    vreg_cap.p1 ~ ic.VREG
+    vreg_cap.p2 ~ ic.GND
+
+    vreg_fb = new FerriteBead
+    vreg_fb -> BLM15HD182SN1D
+
+    # Connections for the VREG LDO
+    vbat.vcc ~ vreg_input_filter.input.io
+    vbat.gnd ~ vreg_input_filter.input.gnd
+    vreg_input_filter.output.io ~ npn.collector
+    npn.base ~ vreg_drive_filter.input.io
+    vreg_drive_filter.output.io ~ ic.DRIVE
+    vreg_drive_filter.output.gnd ~ ic.GND
+    npn.emitter ~ vreg_fb.p1
+    vreg_fb.p2 ~ ic.VREG
+
+    # Reference for powering thermistors
+    vref1 = new Power
+    vref1.vcc ~ ic.VREF1
+    vref1.gnd ~ ic.GND
+
+    vref1_cap = new Capacitor
+    vref1_cap.package = "0402"
+    vref1_cap.value = 1uF +/- 20%
+    vref1_cap.p1 ~ ic.VREF1
+    vref1_cap.p2 ~ ic.GND
+
+    # ISOMD mode select (SPI or ISOSPI)
+    # ISOMD ~ VREG = ISOSPI
+    # ISOMD ~ GND = SPI
+    isomd_sw = new MSK12CO2_SPDT_SWITCH
+    isomd_sw.output ~ ic.ISOMD
+    isomd_sw.power.vcc ~ ic.VREG
+    isomd_sw.power.gnd ~ ic.GND
+
+    # Internal interfaces
+    # ADC reference
+    vref2 = new Power
+
+    vref2_cap = new Capacitor
+    vref2_cap.package = "0402"
+    vref2_cap.value = 1uF +/- 20%
+    vref2_cap.p1 ~ ic.VREF2
+    vref2_cap.p2 ~ ic.GND
+
+    # Cell interfaces
+    cell1 = new CellInput
+    cell1.sense.p ~ ic.C1
+    cell1.sense.n ~ ic.C0
+    cell1.bleed.p ~ ic.S1P
+    cell1.bleed.n ~ ic.S1N
+    cell1.sgnd ~ ic.GND
+
+    cell2 = new CellInput
+    cell2.sense.p ~ ic.C2
+    cell2.sense.n ~ ic.C1
+    cell2.bleed.p ~ ic.S2P
+    cell2.bleed.n ~ ic.S2N
+    cell2.sgnd ~ ic.S1P
+
+    cell3 = new CellInput
+    cell3.sense.p ~ ic.C3
+    cell3.sense.n ~ ic.C2
+    cell3.bleed.p ~ ic.S3P
+    cell3.bleed.n ~ ic.S3N
+    cell3.sgnd ~ ic.S2P
+
+    cell4 = new CellInput
+    cell4.sense.p ~ ic.C4
+    cell4.sense.n ~ ic.C3
+    cell4.bleed.p ~ ic.S4P
+    cell4.bleed.n ~ ic.S4N
+    cell4.sgnd ~ ic.S3P
+
+    cell5 = new CellInput
+    cell5.sense.p ~ ic.C5
+    cell5.sense.n ~ ic.C4
+    cell5.bleed.p ~ ic.S5P
+    cell5.bleed.n ~ ic.S5N
+    cell5.sgnd ~ ic.S4P
+
+    cell6 = new CellInput
+    cell6.sense.p ~ ic.C6
+    cell6.sense.n ~ ic.C5
+    cell6.bleed.p ~ ic.S6P
+    cell6.bleed.n ~ ic.S6N
+    cell6.sgnd ~ ic.S5P
+
+    cell7 = new CellInput
+    cell7.sense.p ~ ic.C7
+    cell7.sense.n ~ ic.C6
+    cell7.bleed.p ~ ic.S7P
+    cell7.bleed.n ~ ic.S7N
+    cell7.sgnd ~ ic.S6P
+
+    cell8 = new CellInput
+    cell8.sense.p ~ ic.C8
+    cell8.sense.n ~ ic.C7
+    cell8.bleed.p ~ ic.S8P
+    cell8.bleed.n ~ ic.S8N
+    cell8.sgnd ~ ic.S7P
+
+    cell9 = new CellInput
+    cell9.sense.p ~ ic.C9
+    cell9.sense.n ~ ic.C9N
+    cell9.sense.n ~ ic.C8
+    cell9.bleed.p ~ ic.S9P
+    cell9.bleed.n ~ ic.S9N
+    cell9.sgnd ~ ic.S8P
+
+    cell10 = new CellInput
+    cell10.sense.p ~ ic.C10
+    cell10.sense.n ~ ic.C9
+    cell10.bleed.p ~ ic.S10P
+    cell10.bleed.n ~ ic.S10N
+    cell10.sgnd ~ ic.S9P
+
+    cell11 = new CellInput
+    cell11.sense.p ~ ic.C11
+    cell11.sense.n ~ ic.C10
+    cell11.bleed.p ~ ic.S11P
+    cell11.bleed.n ~ ic.S11N
+    cell11.sgnd ~ ic.S10P
+
+    cell12 = new CellInput
+    cell12.sense.p ~ ic.C12
+    cell12.sense.n ~ ic.C11
+    cell12.bleed.p ~ ic.S12P
+    cell12.bleed.n ~ ic.S12N
+    cell12.sgnd ~ ic.S11P
+
+    cell13 = new CellInput
+    cell13.sense.p ~ ic.C13
+    cell13.sense.n ~ ic.C12
+    cell13.bleed.p ~ ic.S13P
+    cell13.bleed.n ~ ic.S13N
+    cell13.sgnd ~ ic.S12P
+
+    cell14 = new CellInput
+    cell14.sense.p ~ ic.C14
+    cell14.sense.n ~ ic.C13
+    cell14.bleed.p ~ ic.S14P
+    cell14.bleed.n ~ ic.S14N
+    cell14.sgnd ~ ic.S13P
+
+    cell15 = new CellInput
+    cell15.sense.p ~ ic.C15
+    cell15.sense.n ~ ic.C14
+    cell15.bleed.p ~ ic.S15P
+    cell15.bleed.n ~ ic.S15N
+    cell15.sgnd ~ ic.S14P
+
+    cell16 = new CellInput
+    cell16.sense.p ~ ic.C16
+    cell16.sense.n ~ ic.C15
+    cell16.bleed.p ~ ic.S16P
+    cell16.bleed.n ~ ic.S16N
+    cell16.sgnd ~ ic.S15P
+
+    temp_sensor_1 = new TempSensor
+    temp_sensor_1.power.vcc ~ ic.VREF2
+    temp_sensor_1.power.gnd ~ ic.GND
+    temp_sensor_1.output.io ~ ic.GPIO1
+
+    temp_sensor_2 = new TempSensor
+    temp_sensor_2.power.vcc ~ ic.VREF2
+    temp_sensor_2.output.io ~ ic.GPIO2
+    temp_sensor_2.power.gnd ~ ic.GND
+
+
+module TempSensor from _VDiv:
+    # 100kΩ 100uA 100mW ±1% 4250K ±1% 0402 NTC Thermistors ROHS
+    r_top.mpn = "C77130"
+    r_top.footprint = "R0402"
+    r_top.value = 100kohm +/- 1%
+    r_bottom.value = 100kohm +/- 1%
+    r_bottom.footprint = "R0402"
+
+
+module CapacitiveIsolation:
+    input = new ISOSPI
+    output = new ISOSPI
+    signal gnd
+
+    cap_p = new Capacitor
+    cap_p.package = "0805"
+    cap_p.value = 47nF +/- 20%
+
+    cap_n = new Capacitor
+    cap_n.package = "0805"
+    cap_n.value = 47nF +/- 20%
+
+    r_top = new Resistor
+    r_top.value = 50ohm +/- 10%
+    r_top.package = "0402"
+
+    r_bot = new Resistor
+    r_bot.value = 50ohm +/- 10%
+    r_bot.package = "0402"
+
+    cap_center = new Capacitor
+    cap_center.value = 10nF +/- 20%
+    cap_center.package = "0402"
+
+    # Connections
+    input.p ~ cap_p.p1; cap_p.p2 ~ output.p
+    input.n ~ cap_n.p1; cap_n.p2 ~ output.n
+
+    # matching circuit
+    input.p ~ r_top.1; r_top.2 ~ r_bot.1; r_bot.2 ~ output.p
+    r_top.2 ~ cap_center.1; cap_center.2 ~ gnd
+
+module CellInput:
+    """
+    Connects across a cell on the input
+    """
+    power = new Power
+    sense = new DiffPair
+    bleed = new DiffPair
+    signal sgnd # gnd reference for bleed filter (SN-1P bleed input) as inputs are not shared
+
+    sense_filter = new DifferentialLowPassFilter
+    bleed_filter_top = new DifferentialLowPassFilter
+    bleed_filter_bot = new DifferentialLowPassFilter
+
+    power.vcc ~ sense_filter.input.p; sense_filter.output.p ~ sense.p
+    sense_filter.output.n ~ sense.n
+
+    power.vcc ~ bleed_filter_top.input.p; bleed_filter_top.output.p ~ bleed.p
+    bleed_filter_top.output.n ~ bleed_filter_bot.output.p
+    power.gnd ~ bleed_filter_bot.input.p; bleed_filter_bot.output.p ~ bleed.n
+    bleed_filter_bot.output.n ~ sgnd
+
+
+    # Configure filter
+    sense_filter.cutoff_frequency = 65kHz to 95kHz
+    sense_filter.capacitor.value = 10nF +/- 10%
+    sense_filter.capacitor.package = "0603"
+    sense_filter.resistor.value = 200ohm +/- 2%
+    sense_filter.resistor.package = "0402"
+
+    bleed_filter_top.cutoff_frequency = 65kHz to 95kHz
+    bleed_filter_top.capacitor.value = 100nF +/- 10%
+    bleed_filter_top.capacitor.package = "0603"
+    bleed_filter_top.resistor.value = 20ohm +/- 2%
+    bleed_filter_top.resistor.package = "0805"
+
+    bleed_filter_bot.cutoff_frequency = 65kHz to 95kHz
+    bleed_filter_bot.capacitor.value = 100nF +/- 10%
+    bleed_filter_bot.capacitor.package = "0603"
+    bleed_filter_bot.resistor.value = 20ohm +/- 2%
+    bleed_filter_bot.resistor.package = "0805"
+
+
+
+    # Mathy bits
+    bleed_rds_on = 2ohm
+    bleed_current = 80mA to 100mA
+    # bleed_filter.resistor.power_rating = 0.25W to 100W
+    assert 3.8V / (2 * bleed_filter_top.resistor.value + bleed_rds_on) within bleed_current
+    # assert (3.8V / (2 * bleed_filter.resistor.value + bleed_rds_on))**2 * bleed_filter.resistor.value within bleed_filter.resistor.power_rating
+
+
+component FZT853TA from NPN:
+    # component FZT853TA
+    footprint = "SOT-223-4_L6.5-W3.5-P2.30-LS7.0-BR"
+    lcsc_id = "C435890"
+    mpn = "C435890"
+    # pins
+    signal collector ~ pin 4
+    collector ~ pin 2
+    signal emitter ~ pin 3
+    signal base ~ pin 1
+
+
+component BLM15HD182SN1D from FerriteBead:
+    # component BLM15HD182SN1D
+    footprint = "L0402"
+    lcsc_id = "C76888"
+    mpn = "C76888"
+    # pins
+    signal _2 ~ pin 2
+    signal _1 ~ pin 1
+
+component MSK12CO2_SPDT_SWITCH:
+    # component MINI_space_MSK12CO2
+    footprint = "SW-SMD_MSK12CO2"
+    lcsc_id = "C2681570"
+    mpn = "C2681570"
+    # pins
+    power = new Power
+    power.vcc ~ pin 3
+    power.gnd ~ pin 1
+    power.gnd ~ pin 4
+    power.gnd ~ pin 5
+    signal output ~ pin 2
+
+component _ADBMS6830MWCCSZ:
+    # component ADBMS6830MWCCSZ
+    footprint = "QFN-72_L10.0-W10.0-P0.50-BL-EP6.0_1"
+    lcsc_id = "C18166017"
+    mpn = "C18166017"
+
+    # pins
+    signal VP ~ pin 1
+    signal C16 ~ pin 2
+    signal S16N ~ pin 3
+    signal S16P ~ pin 4
+    signal C15 ~ pin 5
+    signal S15N ~ pin 6
+    signal S15P ~ pin 7
+    signal C14 ~ pin 8
+    signal S14N ~ pin 9
+    signal S14P ~ pin 10
+    signal C13 ~ pin 11
+    signal S13N ~ pin 12
+    signal S13P ~ pin 13
+    signal C12 ~ pin 14
+    signal S12N ~ pin 15
+    signal S12P ~ pin 16
+    signal C11 ~ pin 17
+    signal S11N ~ pin 18
+    signal S11P ~ pin 19
+    signal C10 ~ pin 20
+    signal S10N ~ pin 21
+    signal S10P ~ pin 22
+    signal C9 ~ pin 23
+    signal S9N ~ pin 24
+    signal S9P ~ pin 25
+    signal C9N ~ pin 26
+    signal C8 ~ pin 27
+    signal S8N ~ pin 28
+    signal S8P ~ pin 29
+    signal C7 ~ pin 30
+    signal S7N ~ pin 31
+    signal S7P ~ pin 32
+    signal C6 ~ pin 33
+    signal S6N ~ pin 34
+    signal S6P ~ pin 35
+    signal C5 ~ pin 36
+    signal S5N ~ pin 37
+    signal S5P ~ pin 38
+    signal C4 ~ pin 39
+    signal S4N ~ pin 40
+    signal S4P ~ pin 41
+    signal C3 ~ pin 42
+    signal S3N ~ pin 43
+    signal S3P ~ pin 44
+    signal C2 ~ pin 45
+    signal S2N ~ pin 46
+    signal S2P ~ pin 47
+    signal C1 ~ pin 48
+    signal S1P ~ pin 49
+    signal C0 ~ pin 50
+    signal CSB_IMA ~ pin 51
+    signal SCK_IPA ~ pin 52
+    signal ISOMD ~ pin 53
+    signal SDI ~ pin 54
+    signal IMB ~ pin 55
+    signal IPB ~ pin 56
+    signal SDO ~ pin 57
+    signal DRIVE ~ pin 58
+    signal S1N ~ pin 59
+    signal GND ~ pin 60
+    signal VREF2 ~ pin 61
+    signal VREG ~ pin 62
+    signal VREF1 ~ pin 63
+    signal GPIO9 ~ pin 64
+    signal GPIO8 ~ pin 65
+    signal GPIO7 ~ pin 66
+    signal GPIO6 ~ pin 67
+    signal GPIO5 ~ pin 68
+    signal GPIO4 ~ pin 69
+    signal GPIO3 ~ pin 70
+    signal GPIO2 ~ pin 71
+    signal GPIO1 ~ pin 72
+    signal PAD ~ pin 73
+
+    GND ~ PAD
