@@ -1,0 +1,11 @@
+from "generics/interfaces.ato" import ISOSPI
+
+component ConnectorISOSPI:
+    # component _5023520201
+    footprint = "CONN-SMD_2P-P2.00_MOLEX_5023520201"
+    lcsc_id = "C587898"
+    mpn = "C587898"
+    # pins
+    isospi = new ISOSPI
+    isospi.p ~ pin 1
+    isospi.n ~ pin 2

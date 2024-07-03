@@ -32,3 +32,7 @@ dependencies:
   version_spec: '@53496dede5b600bd799a0afe199eaa514ebdc5f6'
   link_broken: true
   path: elec/src/usb-connectors
+- name: xt-connectors
+  version_spec: '@3719ec970da96df05b6763671993ca2276df968b'
+  link_broken: true
+  path: elec/src/xt-connectors
