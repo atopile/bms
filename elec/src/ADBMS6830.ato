@@ -32,8 +32,6 @@ module ADBMS6830:
     iso_a_isolation.output.p ~ iso_a.p
 
     iso_b = new ISOSPI
-    iso_b.n ~ ic.IMB
-    iso_b.p ~ ic.IPB
 
     iso_b_isolation = new CapacitiveIsolation
     iso_b_isolation.input.n ~ ic.IMB
@@ -126,6 +124,7 @@ module ADBMS6830:
     # Connections for the V+ filter
     vbat.vcc ~ vplus_filter.input.io
     vbat.gnd ~ vplus_filter.input.gnd
+    vbat.gnd ~ ic.GND
     vplus_filter.output.io ~ ic.VP
 
 
@@ -251,12 +250,12 @@ module ADBMS6830:
     cell16.sgnd ~ ic.S15P
 
     temp_sensor_1 = new TempSensor
-    temp_sensor_1.power.vcc ~ ic.VREF2
+    temp_sensor_1.power.vcc ~ ic.VREF1
     temp_sensor_1.power.gnd ~ ic.GND
     temp_sensor_1.output.io ~ ic.GPIO1
 
     temp_sensor_2 = new TempSensor
-    temp_sensor_2.power.vcc ~ ic.VREF2
+    temp_sensor_2.power.vcc ~ ic.VREF1
     temp_sensor_2.output.io ~ ic.GPIO2
     temp_sensor_2.power.gnd ~ ic.GND
 
@@ -300,8 +299,8 @@ module CapacitiveIsolation:
     input.n ~ cap_n.p1; cap_n.p2 ~ output.n
 
     # matching circuit
-    input.p ~ r_top.1; r_top.2 ~ r_bot.1; r_bot.2 ~ output.p
-    r_top.2 ~ cap_center.1; cap_center.2 ~ gnd
+    input.p ~ r_top.p1; r_top.p2 ~ r_bot.p1; r_bot.p2 ~ input.n
+    r_top.2 ~ cap_center.p1; cap_center.p2 ~ gnd
 
 module CellInput:
     """

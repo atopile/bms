@@ -8,6 +8,7 @@ from "usb-connectors/usb-connectors.ato" import USBCConn
 from "saleae-header/saleae-header.ato" import SaleaeHeader
 from "xt-connectors/xt-connectors.ato" import XT30_Male_Right_Angle
 from "generics/resistors.ato" import Resistor
+from "connectors.ato" import ConnectorISOSPI
 
 
 module Adbms6830Devboard:
@@ -16,6 +17,13 @@ module Adbms6830Devboard:
     micro = new RP2040Kit
 
     power_connector = new XT30_Male_Right_Angle
+
+    # ISO SPI connectors
+    port_a_connector = new ConnectorISOSPI
+    port_b_connector = new ConnectorISOSPI
+
+    port_a_connector.isospi ~ bms.iso_a
+    port_b_connector.isospi ~ bms.iso_b
 
     # connect gnd together
     micro.power.gnd ~ bms.vbat.gnd
@@ -50,8 +58,8 @@ module Adbms6830Devboard:
     micro.power ~ power3v3
 
     # assign reset and boot buttons
-    # micro.reset_btn.btn -> ButtonSKRPACE010
-    # micro.boot_btn.btn -> ButtonSKRPACE010
+    micro.reset_btn.btn -> ButtonSKRPACE010
+    micro.boot_btn.btn -> ButtonSKRPACE010
 
     ldo3v3 = new LDK220M_R
     ldo3v3.v_in = 5V +/- 10%
@@ -65,9 +73,11 @@ module Adbms6830Devboard:
     bms.ic.VREF2 ~ bms_ref_debug.ch1.io
     bms.ic.VREG ~ bms_ref_debug.ch2.io
     bms.ic.DRIVE ~ bms_ref_debug.ch3.io
+    bms_ref_debug.gnd ~ bms.vbat.gnd
 
     bms_spi_debug = new SaleaeHeader
-    bms.spi ~ bms_spi_debug.spi
+    bms_spi_debug.spi ~ micro.spi
+    bms_spi_debug.gnd ~ bms.vbat.gnd
 
 
 module _SPIJumper:
