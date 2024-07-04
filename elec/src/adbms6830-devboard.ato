@@ -3,7 +3,7 @@ from "cell-sim.ato" import CellSim
 from "generics/buttons.ato" import ButtonSKRPACE010
 from "ldk220m-r/elec/src/ldk220m-r.ato" import LDK220M_R
 from "generics/interfaces.ato" import Power, SPI
-from "rp2040/rp2040Kit.ato" import RP2040Kit
+from "rp2040/RP2040Kit.ato" import RP2040Kit
 from "usb-connectors/usb-connectors.ato" import USBCConn
 from "saleae-header/saleae-header.ato" import SaleaeHeader
 from "xt-connectors/xt-connectors.ato" import XT30_Male_Right_Angle
