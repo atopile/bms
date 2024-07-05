@@ -46,13 +46,19 @@ component ADBMS6822:
 
 component _ConfigResistor from Resistor:
     """Configuration Resistor"""
-    package = "0402"
+    footprint = "R0402"
 
 
-component _BypassCapacitor from Resistor:
+component _0OhmConfig from _ConfigResistor:
+    """Configuration Resistor"""
+    mpn = "C17168"
+    value = 0Ω
+
+
+component _BypassCapacitor from Capacitor:
     """Configuration Resistor"""
     package = "0402"
-    rated_voltage = 10 to 50V
+    # rated_voltage = 10 to 50V
     value = 100nF * (0.8 to 5)  # -20%, + lots
 
 
@@ -138,30 +144,24 @@ module ADBMS6822Module:
     # 18 sec            54 | 56.2 | 58 kΩ
     # 24 sec            67 | 68.1 | 71 kΩ
     # 48 sec            79 | 80.6 | 83 kΩ
-    lpcm_1_cfg = new _ConfigResistor
-    lpcm_1_cfg.value = 0Ω
+    lpcm_1_cfg = new _0OhmConfig
     _ic.RTO ~ lpcm_1_cfg.1; lpcm_1_cfg.2 ~ _gnd
 
-    lpcm_2_cfg = new _ConfigResistor
-    lpcm_2_cfg.value = 0Ω
+    lpcm_2_cfg = new _0OhmConfig
     _ic.RTO2 ~ lpcm_2_cfg.1; lpcm_2_cfg.2 ~ _gnd
 
     # Transceiver Mode
     # See https://www.analog.com/media/en/technical-documentation/data-sheets/adbms6821-adbms6822.pdf#page=5
-    xcvrmd_1_cfg = new _ConfigResistor
-    xcvrmd_1_cfg.value = 0Ω
+    xcvrmd_1_cfg = new _0OhmConfig
     _ic.RTO ~ xcvrmd_1_cfg.1; xcvrmd_1_cfg.2 ~ _gnd
 
-    xcvrmd_2_cfg = new _ConfigResistor
-    xcvrmd_2_cfg.value = 0Ω
+    xcvrmd_2_cfg = new _0OhmConfig
     _ic.RTO2 ~ xcvrmd_2_cfg.1; xcvrmd_2_cfg.2 ~ _gnd
 
     # Standard Bi-directional Mode
     # 0Ω -> SCK triggered on rising edge
-    phapol_1_cfg = new _ConfigResistor
-    phapol_1_cfg.value = 0Ω
+    phapol_1_cfg = new _0OhmConfig
     _ic.RTO ~ phapol_1_cfg.1; phapol_1_cfg.2 ~ _gnd
 
-    phapol_2_cfg = new _ConfigResistor
-    phapol_2_cfg.value = 0Ω
+    phapol_2_cfg = new _0OhmConfig
     _ic.RTO2 ~ phapol_2_cfg.1; phapol_2_cfg.2 ~ _gnd

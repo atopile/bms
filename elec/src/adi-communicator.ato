@@ -4,33 +4,95 @@ from "ADBMS6822.ato" import ADBMS6822Module
 from "HM2102NLT.ato" import HM2102NLT
 from "tps63020dsjr/elec/src/tps63020dsjr.ato" import TPS63020DSJR
 from "jst_2p.ato" import JST_PH_2P
-from "generics/interfaces.ato" import Power
+from "generics/interfaces.ato" import Power, SPI
+from "usb-connectors/usb-connectors.ato" import USBCConn
+from "generics/leds.ato" import LEDIndicatorRed
+from "_1N5819WS.ato" import _1N5819WS
+from "AO3401A.ato" import AO3401A
+from "generics/resistors.ato" import Resistor
+from "bq24045dsqr/elec/src/bq24045dsqr.ato" import BQ2404XDSQR
+from "tf-01a/elec/src/tf-01a.ato" import TF_01A
+from "programming-headers/elec/src/programming-headers.ato" import JTAG_10PIN
+from "sk6805-ec20/elec/src/sk6805-ec20.ato" import SK6805EC20
+
+
+module PowerPrioritiser:
+    """Prioritise the power rails"""
+    signal _gnd
+    high_priority = new Power
+    low_priority = new Power
+    out = new Power
+
+    # Tie all the grounds
+    _gnd ~ high_priority.gnd
+    _gnd ~ low_priority.gnd
+    _gnd ~ out.gnd
+
+    diode = new _1N5819WS
+    high_priority.vcc ~ diode.anode; diode.cathode ~ out.vcc
+
+    pfet = new AO3401A
+    low_priority.vcc ~ pfet.drain; pfet.source ~ out.vcc
+
+    # Tie the gate hard up to the high priority rail
+    # and soft down to ground
+    _pulldown = new Resistor
+    _pulldown.value = 10kΩ to 47kΩ
+    high_priority.vcc ~ pfet.gate; pfet.gate ~ _pulldown.p1; _pulldown.p2 ~ _gnd
 
 
 module BMSCommunicator:
     """
     This is a development, debugging and validation tool for use with isoSPI BMS devices.
     """
-    _uc = new ESP32S3
-    _nic = new ADBMS6822Module
+    uc = new ESP32S3
+    jtag = new JTAG_10PIN
+    uc.jtag ~ jtag.jtag
+
+    ## Power
+    usb_conn = new USBCConn
+    usb_conn.usb2 ~ uc.usb2
+
+    battery_conn = new JST_PH_2P
+    power_batt = new Power
+    battery_conn.vcc ~ power_batt.vcc
+    battery_conn.gnd ~ power_batt.gnd
+
+    # Ideally draw from the USB connection
+    # and prevent back-feeding the battery
+    power_prio = new PowerPrioritiser
+    usb_conn.power ~ power_prio.high_priority
+    power_batt ~ power_prio.low_priority
 
     # Power rails
-    _battery_conn = new JST_PH_2P
-    power_battery = new Power
-    _battery_conn.vcc ~ power_battery.vcc
-    _battery_conn.gnd ~ power_battery.gnd
-
     _5v_reg = new TPS63020DSJR
-    power_battery ~ _5v_reg.power_in
+    power_prio.out ~ _5v_reg.power_in
     _5v_reg.v_in = 2.5V to 4.2V
     _5v_reg.v_out = 5V +/- 10%
+    power_5v = new Power
+    _5v_reg.power_out ~ power_5v
 
     _3v3_reg = new TPS63020DSJR
-    power_battery ~ _3v3_reg.power_in
+    power_prio.out ~ _3v3_reg.power_in
     _3v3_reg.v_in = 2.5V to 4.2V
     _3v3_reg.v_out = 3.3V +/- 10%
+    power_3v3 = new Power
+    _3v3_reg.power_out ~ power_3v3
+
+    power_indicator = new LEDIndicatorRed
+    power_3v3 ~ power_indicator.power
+    power_indicator.v_in = _3v3_reg.v_out
+
+    # Battery charger
+    _charger = new BQ2404XDSQR
+    usb_conn.power ~ _charger.power_in
+    _charger.power_batt ~ power_batt
+
+    ## SPI Network things
+    _nic = new ADBMS6822Module
 
     # Isolated SPI transformer
+    # TODO: Add cap to center taps?
     _iso_transformer = new HM2102NLT
     _nic.isospi_1 ~ _iso_transformer.logic_1
     _nic.isospi_2 ~ _iso_transformer.logic_2
@@ -39,3 +101,22 @@ module BMSCommunicator:
     bms_a_conn.isospi ~ _iso_transformer.iso_1
     bms_b_conn = new isoSPIConnector
     bms_b_conn.isospi ~ _iso_transformer.iso_2
+
+    _nic.logic_spi_1.miso ~ _nic.logic_spi_2.miso
+    _nic.logic_spi_1.mosi ~ _nic.logic_spi_2.mosi
+    _nic.logic_spi_1.sck ~ _nic.logic_spi_2.sck
+    # FIXME: This is a hack to get the CS lines to be different
+    uc.io35 ~ _nic.logic_spi_1.miso
+    uc.io36 ~ _nic.logic_spi_1.mosi
+    uc.io37 ~ _nic.logic_spi_1.sck
+    uc.io38 ~ _nic.logic_spi_1.cs
+    uc.io45 ~ _nic.logic_spi_2.cs
+
+    ## SD Card on Fast SPI interface (SPI2)
+    _sd_card = new TF_01A
+    uc.spi2 ~ _sd_card.spi
+    power_3v3 ~ _sd_card.power
+
+    ## General-Purpose LED indicator
+    _led = new SK6805EC20
+    uc.io21 ~ _led.din.io
