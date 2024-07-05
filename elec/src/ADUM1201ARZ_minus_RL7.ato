@@ -1,0 +1,15 @@
+component ADUM1201ARZ_minus_RL7:
+    # component ADUM1201ARZ_minus_RL7
+    footprint = "SOIC-8_L4.9-W3.9-P1.27-LS6.0-BL"
+    lcsc_id = "C9669"
+    mpn = "C9669"
+    # pins
+    signal VDD1 ~ pin 1
+    signal VOA ~ pin 2
+    signal VIB ~ pin 3
+    signal GND1 ~ pin 4
+    signal GND2 ~ pin 5
+    signal VOB ~ pin 6
+    signal VIA ~ pin 7
+    signal VDD2 ~ pin 8
+

@@ -51,6 +51,10 @@ module Adbms6830Devboard:
     cell_sim.cell16.power_out ~ bms.cell16.power
     cell_sim.power_batt ~ bms.vbat
 
+    resistor = new Resistor
+    resistor.footprint = "mylib:R0402"
+    resistor.mpn = "testing123"
+
     # Interfaces
     power3v3 = new Power
     usbc = new USBCConn

@@ -7,6 +7,10 @@ module Regulator:
     # connect grounds (non isolated regulator)
     power_in.gnd ~ power_out.gnd
 
+module IsolatedRegulator:
+    power_in = new Power
+    power_out = new Power
+
 module AdjustableRegulator from Regulator:
     # using vanilla voltage divider without equations
     feedback_div = new _VDiv

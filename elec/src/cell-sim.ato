@@ -1,6 +1,7 @@
 from "generics/capacitors.ato" import Capacitor
 from "generics/interfaces.ato" import Power, SPI
 from "generics/leds.ato" import LEDIndicatorGreen
+from "generics/regulators.ato" import IsolatedRegulator
 
 module CellSim:
     power_in = new Power
@@ -78,20 +79,174 @@ module CellSim:
 
 module Cell:
     """
-    Isolated DCDC converter
+    Power:
+    Isolated DCDC converter -> Buck regulator -> LDO -> filter -> Output switch -> current sensor -> Cell output
+
+    Control:
+    Digital isolator (i2c) ->
+        - ADC current sense
+        - ADC voltage sense (buck)
+        - ADC voltage sense (LDO)
+        - gpio output (switch)
+        - DAC (buck)
+        - DAC (LDO)
+
+    Parts list:
+        gpio expander: TCA6408ARGTR (0x20/0x21)
+        DAC: MCP4725A0T-E/CH
+        ADC: ADS1115IDGSR
+        Digital isolator: ISO1640BDR
+        Output relay: HFD4/5-SR
+        Buck regulator: TPS563201DDCR
+        Addressable leds: Sk6805
     """
+    # External interfaces
     power_in = new Power
     power_out = new Power
+    i2c = new I2C
 
-    converter = new B1203S_1WR3
+    # Internal interfaces
+    _power_5v = new Power
+    _power_3v3 = new Power
+
+    isolated_converter = new B1205S_2WR2
+    adc = new ADS1115IDGSR
+    buck = new TPS563201DDCR
+    ldo = new AdjustableLDO
+    current_sense = new CurrentSensor
+    relay = new Relay
+    filter = new PiFilter
+    digital_isolator = new DigitalIsolator
+    voltage_led = new AddressableLED
+    current_led = new AddressableLED
+
+    # Digital i2c isolator
+    i2c ~ digital_isolator.i2c_in
+
+    # Connect I2C to devices
+    digital_isolator.i2c_out ~ adc.i2c
+    digital_isolator.i2c_out ~ buck.i2c
+    digital_isolator.i2c_out ~ ldo.i2c
+    digital_isolator.i2c_out ~ relay.i2c
+
+    # Internal rails
+    internal_ldo = new LDO
+    _power_5v ~ internal_ldo.power_in
+    internal_ldo.power_out ~ power_3v3
+
+    # Power devices
+    _power_3v3 ~ adc.power
+    _power_3v3 ~ digital_isolator.power
+    _power_3v3 ~ buck.power
+
+    # Connect Cell components
+    power_in ~ isolated_converter.power_in
+    isolated_converter.power_out ~ _power_5v
+    _power_5v ~ buck.power_in
+    buck.power_out ~ ldo.power_in
+    ldo.power_out ~ filter.power_in
+    filter.power_out ~ relay.power_in
+    relay.power_out ~ current_sense.power_in
+    current_sense.power_out ~ power_out
+
+
+module DigitalRegulator from Regulator:
+    i2c = new I2C
+    dac = new MCP4725A0T
+    ctrl_resistor = new Resistor
+
+module DigitalBuck from DigitalRegulator:
+    regulator = new Buck
+
+module DigitalLDO from DigitalRegulator:
+    regulator = new LDO
+
+component TPS563201DDCR:
+    # component TPS563201DDCR
+    footprint = "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL"
+    lcsc_id = "C116592"
+    mpn = "C116592"
+    # pins
+    signal GND ~ pin 1
+    signal SW ~ pin 2
+    signal VIN ~ pin 3
+    signal VFB ~ pin 4
+    signal EN ~ pin 5
+    signal VBST ~ pin 6
+
+module ADS1115IDGSR:
+    # adc
+    ic = new _ADS1115IDGSR
+
+    i2c = new I2C
+    i2c.sda ~ ic.SDA
+    i2c.scl ~ ic.SCL
+
+    power = new Power
+    power.vcc ~ ic.VDD
+    power.gnd ~ ic.GND
+
+    # address 0x48?
+    ic.ADDR ~ power.gnd
+
+component _ADS1115IDGSR:
+    # component ADS1115IDGSR
+    footprint = "MSOP-10_L3.0-W3.0-P0.50-LS5.0-BL"
+    lcsc_id = "C37593"
+    mpn = "C37593"
+    # pins
+    signal ADDR ~ pin 1
+    signal ALERT_slash_RDY ~ pin 2
+    signal GND ~ pin 3
+    signal AIN0 ~ pin 4
+    signal AIN1 ~ pin 5
+    signal AIN2 ~ pin 6
+    signal AIN3 ~ pin 7
+    signal VDD ~ pin 8
+    signal SDA ~ pin 9
+    signal SCL ~ pin 10
+
+component HFD4_5_S:
+    # component HFD4_slash_5_minus_S
+    footprint = "RELAY-SMD_HFD4-5-SR"
+    lcsc_id = "C64399"
+    mpn = "C64399"
+    # pins
+    signal _1 ~ pin 1
+    signal _4 ~ pin 4
+    signal _2 ~ pin 2
+    signal _3 ~ pin 3
+    signal _6 ~ pin 6
+    signal _7 ~ pin 7
+    signal _8 ~ pin 8
+    signal _5 ~ pin 5
+
+module MCP4725A0T:
+    ic = new _MCP4725A0T
+
+component _MCP4725A0T:
+    # component MCP4725A0T_minus_E_slash_CH
+    footprint = "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL"
+    lcsc_id = "C144198"
+    mpn = "C144198"
+    # pins
+    signal VOUT ~ pin 1
+    signal VSS ~ pin 2
+    signal VDD ~ pin 3
+    signal SDA ~ pin 4
+    signal SCL ~ pin 5
+    signal A0 ~ pin 6
+
+
+module B1205S_2WR2 from IsolatedRegulator:
+    converter = new _B1205S_2WR2
     converter.power_in ~ power_in
     converter.power_out ~ power_out
 
     led = new LEDIndicatorGreen
-    led.v_in = 3.3V +/- 1%
+    led.v_in = 5V +/- 1%
     led.power ~ power_out
     led.current = 0.1mA to 0.3mA
-
 
     input_cap = new Capacitor
     input_cap.value = 2.2uF +/- 10%
@@ -105,16 +260,18 @@ module Cell:
     output_cap.footprint = "C0805"
     power_out ~ output_cap.power
 
-component B1203S_1WR3:
-    # component B1203S-1WR3
-    footprint = "PWRM-TH_YLPTEC_BXXXXS-1WR3"
-    lcsc_id = "C5369464"
-    mpn = "C5369464"
 
+component _B1205S_2WR2:
+    # component B1205S_minus_2WR2_C2992386
+    # 2W, 12V in 5V out
+    footprint = "PWRM-TH_BXXXXS-2WR2"
+    lcsc_id = "C2992386"
+    mpn = "C2992386"
+    # pins
     power_in = new Power
-    power_in.vcc ~ pin 2
-    power_in.gnd ~ pin 1
+    power_in.vcc ~ pin 1
+    power_in.gnd ~ pin 2
 
     power_out = new Power
-    power_out.vcc ~ pin 4
-    power_out.gnd ~ pin 3
+    power_out.vcc ~ pin 6
+    power_out.gnd ~ pin 4

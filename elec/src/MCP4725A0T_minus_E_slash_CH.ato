@@ -1,0 +1,13 @@
+component MCP4725A0T_minus_E_slash_CH:
+    # component MCP4725A0T_minus_E_slash_CH
+    footprint = "SOT-23-6_L2.9-W1.6-P0.95-LS2.8-BL"
+    lcsc_id = "C144198"
+    mpn = "C144198"
+    # pins
+    signal VOUT ~ pin 1
+    signal VSS ~ pin 2
+    signal VDD ~ pin 3
+    signal SDA ~ pin 4
+    signal SCL ~ pin 5
+    signal A0 ~ pin 6
+
