@@ -1,4 +1,4 @@
-from "generics/interfaces.ato" import DiffPair
+from "generics/interfaces.ato" import ISOSPI
 
 component isoSPIConnector:
     """
@@ -12,6 +12,6 @@ component isoSPIConnector:
     signal isolated_positive ~ pin 1
     signal isolated_negative ~ pin 2
 
-    isolated_diff_pair = new DiffPair
-    isolated_diff_pair.p ~ isolated_positive
-    isolated_diff_pair.n ~ isolated_negative
+    isospi = new ISOSPI
+    isospi.p ~ isolated_positive
+    isospi.n ~ isolated_negative

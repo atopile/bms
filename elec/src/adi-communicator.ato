@@ -1,2 +1,41 @@
-module ADICommunicator:
-    signal gnd
+from "esp32-s3/elec/src/esp32-s3.ato" import ESP32S3
+from "isoSPIConnector.ato" import isoSPIConnector
+from "ADBMS6822.ato" import ADBMS6822Module
+from "HM2102NLT.ato" import HM2102NLT
+from "tps63020dsjr/elec/src/tps63020dsjr.ato" import TPS63020DSJR
+from "jst_2p.ato" import JST_PH_2P
+from "generics/interfaces.ato" import Power
+
+
+module BMSCommunicator:
+    """
+    This is a development, debugging and validation tool for use with isoSPI BMS devices.
+    """
+    _uc = new ESP32S3
+    _nic = new ADBMS6822Module
+
+    # Power rails
+    _battery_conn = new JST_PH_2P
+    power_battery = new Power
+    _battery_conn.vcc ~ power_battery.vcc
+    _battery_conn.gnd ~ power_battery.gnd
+
+    _5v_reg = new TPS63020DSJR
+    power_battery ~ _5v_reg.power_in
+    _5v_reg.v_in = 2.5V to 4.2V
+    _5v_reg.v_out = 5V +/- 10%
+
+    _3v3_reg = new TPS63020DSJR
+    power_battery ~ _3v3_reg.power_in
+    _3v3_reg.v_in = 2.5V to 4.2V
+    _3v3_reg.v_out = 3.3V +/- 10%
+
+    # Isolated SPI transformer
+    _iso_transformer = new HM2102NLT
+    _nic.isospi_1 ~ _iso_transformer.logic_1
+    _nic.isospi_2 ~ _iso_transformer.logic_2
+
+    bms_a_conn = new isoSPIConnector
+    bms_a_conn.isospi ~ _iso_transformer.iso_1
+    bms_b_conn = new isoSPIConnector
+    bms_b_conn.isospi ~ _iso_transformer.iso_2
