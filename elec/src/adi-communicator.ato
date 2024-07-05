@@ -10,7 +10,8 @@ from "generics/leds.ato" import LEDIndicatorRed
 from "_1N5819WS.ato" import _1N5819WS
 from "AO3401A.ato" import AO3401A
 from "generics/resistors.ato" import Resistor
-from "bq24045dsqr/elec/src/bq24045dsqr.ato" import BQ2404XDSQR
+from "generics/capacitors.ato" import Capacitor
+from "bq24045dsqr/elec/src/bq24045dsqr.ato" import BQ24040DSQR
 from "tf-01a/elec/src/tf-01a.ato" import TF_01A
 from "programming-headers/elec/src/programming-headers.ato" import JTAG_10PIN
 from "sk6805-ec20/elec/src/sk6805-ec20.ato" import SK6805EC20
@@ -41,7 +42,7 @@ module PowerPrioritiser:
     high_priority.vcc ~ pfet.gate; pfet.gate ~ _pulldown.p1; _pulldown.p2 ~ _gnd
 
 
-module BMSCommunicator:
+module ADICommunicator:
     """
     This is a development, debugging and validation tool for use with isoSPI BMS devices.
     """
@@ -78,24 +79,32 @@ module BMSCommunicator:
     _3v3_reg.v_out = 3.3V +/- 10%
     power_3v3 = new Power
     _3v3_reg.power_out ~ power_3v3
+    power_3v3 ~ uc.power
 
     power_indicator = new LEDIndicatorRed
     power_3v3 ~ power_indicator.power
     power_indicator.v_in = _3v3_reg.v_out
 
     # Battery charger
-    _charger = new BQ2404XDSQR
+    _charger = new BQ24040DSQR
     usb_conn.power ~ _charger.power_in
     _charger.power_batt ~ power_batt
 
     ## SPI Network things
     _nic = new ADBMS6822Module
+    power_3v3 ~ _nic.logic_power
+    power_5v ~ _nic.iso_power
 
     # Isolated SPI transformer
-    # TODO: Add cap to center taps?
     _iso_transformer = new HM2102NLT
     _nic.isospi_1 ~ _iso_transformer.logic_1
     _nic.isospi_2 ~ _iso_transformer.logic_2
+    _iso_cap_1 = new Capacitor
+    _iso_cap_2 = new Capacitor
+    _iso_cap_1.value = 10nF +/- 20%
+    _iso_cap_2.value = 10nF +/- 20%
+    _iso_transformer.logic_1_center ~ _iso_cap_1.p1; _iso_cap_1.p2 ~ power_3v3.gnd
+    _iso_transformer.logic_2_center ~ _iso_cap_2.p1; _iso_cap_2.p2 ~ power_3v3.gnd
 
     bms_a_conn = new isoSPIConnector
     bms_a_conn.isospi ~ _iso_transformer.iso_1
