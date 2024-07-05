@@ -5,7 +5,7 @@ from "generics/capacitors.ato" import Capacitor
 
 component ADBMS6822:
     """Single isoSPI Transceiver"""
-    footprint = "05-08-7057_ADI.kicad_mod"
+    footprint = "05-08-7057_ADI"
     mpn = "ADBMS6822WCCSZ"
 
     # Source: [page 9, section Pin Configurations and Function Descriptions]

@@ -38,8 +38,8 @@ dependencies:
   path: elec/src/xt-connectors
 - name: esp32-s3
   version_spec: '@775b03e7566001d5724b98a5c5d952a887bb550c'
-  link_broken: true
-  path: elec/src/esp32-s3
+  link_broken: false
+  path: .ato/modules/esp32-s3
 - name: bq24045dsqr
   version_spec: '@14ee74841ac8a1d311dd1050445bc6b4f300c6bf'
   link_broken: true
