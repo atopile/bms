@@ -10,31 +10,31 @@ component HM2102NLT:
     working_voltage = 0 to 1600V
 
     # Channel 1
-    signal iso_1_p ~ pin 1
+    signal iso_1_n ~ pin 1
     signal iso_1_center ~ pin 2
-    signal iso_1_n ~ pin 3
+    signal iso_1_p ~ pin 3
     iso_1 = new ISOSPI
     iso_1.p ~ iso_1_p
     iso_1.n ~ iso_1_n
 
-    signal logic_1_p ~ pin 12
+    signal logic_1_n ~ pin 12
     signal logic_1_center ~ pin 11
-    signal logic_1_n ~ pin 10
+    signal logic_1_p ~ pin 10
     logic_1 = new ISOSPI
     logic_1.p ~ logic_1_p
     logic_1.n ~ logic_1_n
 
     # Channel 2
-    signal iso_2_p ~ pin 4
+    signal iso_2_n ~ pin 4
     signal iso_2_center ~ pin 5
-    signal iso_2_n ~ pin 6
+    signal iso_2_p ~ pin 6
     iso_2 = new ISOSPI
     iso_2.p ~ iso_2_p
     iso_2.n ~ iso_2_n
 
-    signal logic_2_p ~ pin 9
+    signal logic_2_n ~ pin 9
     signal logic_2_center ~ pin 8
-    signal logic_2_n ~ pin 7
+    signal logic_2_p ~ pin 7
     logic_2 = new ISOSPI
     logic_2.p ~ logic_2_p
     logic_2.n ~ logic_2_n
