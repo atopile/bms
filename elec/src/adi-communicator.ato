@@ -53,8 +53,8 @@ module ADICommunicator:
     ## Power
     usb_conn = new USBCConn
     usb_conn.usb2 ~ uc.usb2
-    usb_conn.usb2.dp.override_net_name = "usb_dp+"
-    usb_conn.usb2.dm.override_net_name = "usb_dm-"
+    usb_conn.usb2.dp.override_net_name = "usb+"
+    usb_conn.usb2.dm.override_net_name = "usb-"
 
     battery_conn = new JST_PH_2P
     power_batt = new Power
@@ -129,8 +129,8 @@ module ADICommunicator:
     uc.io9 ~ _nic.logic_spi_1.mosi
     uc.io46 ~ _nic.logic_spi_1.miso
     uc.io3 ~ _nic.logic_spi_1.sck
-    uc.io8 ~ _nic.logic_spi_1.cs
-    uc.io18 ~ _nic.logic_spi_2.cs
+    uc.io18 ~ _nic.logic_spi_1.cs
+    uc.io8 ~ _nic.logic_spi_2.cs
 
     ## SD Card on Fast SPI interface (SPI2)
     _sd_card = new TF_01A
