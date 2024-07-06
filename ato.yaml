@@ -20,19 +20,43 @@ dependencies:
   version_spec: '@a8c4e5cf7b1a72942f23138e11141b73be84eceb'
   link_broken: true
   path: elec/src/rp2040
-- name: ldk220m-r
-  version_spec: '@1c2a973953da33a23d7afdce0fa1f7fdf68dc68e'
-  link_broken: true
-  path: elec/src/ldk220m-r
 - name: saleae-header
   version_spec: '@c2893ddaad84cd03553cd29747d3bb9e0655ef20'
   link_broken: true
   path: elec/src/saleae-header
-- name: usb-connectors
-  version_spec: '@53496dede5b600bd799a0afe199eaa514ebdc5f6'
-  link_broken: true
-  path: elec/src/usb-connectors
 - name: xt-connectors
   version_spec: '@3719ec970da96df05b6763671993ca2276df968b'
   link_broken: true
   path: elec/src/xt-connectors
+- name: esp32-s3
+  version_spec: '@775b03e7566001d5724b98a5c5d952a887bb550c'
+  link_broken: false
+  path: .ato/modules/esp32-s3
+- name: tf-01a
+  version_spec: '@19f4c986d486c7098b34e129225106d260827def'
+  link_broken: true
+  path: elec/src/tf-01a
+- name: programming-headers
+  version_spec: '@e3a6ca6b5b93e3c2db899aa7cc5a8fde17920abc'
+  link_broken: true
+  path: elec/src/programming-headers
+- name: tps63020dsjr
+  version_spec: '@05e0eabdcf71388f020d9ddb3fca08726b19a664'
+  link_broken: false
+  path: .ato/modules/tps63020dsjr
+- name: usb-connectors
+  version_spec: '@53496dede5b600bd799a0afe199eaa514ebdc5f6'
+  link_broken: false
+  path: .ato/modules/usb-connectors
+- name: sk6805-ec20
+  version_spec:
+  link_broken: false
+  path: .ato/modules/sk6805-ec20
+- name: bq24045dsqr
+  version_spec: '@14ee74841ac8a1d311dd1050445bc6b4f300c6bf'
+  link_broken: false
+  path: .ato/modules/bq24045dsqr
+- name: ldk220m-r
+  version_spec: '@1c2a973953da33a23d7afdce0fa1f7fdf68dc68e'
+  link_broken: true
+  path: elec/src/ldk220m-r

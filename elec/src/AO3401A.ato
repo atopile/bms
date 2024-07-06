@@ -1,0 +1,12 @@
+from "generics/mosfets.ato" import PFET
+
+
+component AO3401A from PFET:
+    # component AO3401A
+    footprint = "SOT-23_L2.9-W1.3-P1.90-LS2.4-BR"
+    lcsc_id = "C15127"
+    mpn = "C15127"
+    # pins
+    gate ~ pin 1
+    source ~ pin 2
+    drain ~ pin 3
