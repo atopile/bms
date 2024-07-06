@@ -56,3 +56,7 @@ dependencies:
   version_spec: '@14ee74841ac8a1d311dd1050445bc6b4f300c6bf'
   link_broken: false
   path: .ato/modules/bq24045dsqr
+- name: ldk220m-r
+  version_spec: '@1c2a973953da33a23d7afdce0fa1f7fdf68dc68e'
+  link_broken: true
+  path: elec/src/ldk220m-r
