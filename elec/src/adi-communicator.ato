@@ -53,6 +53,8 @@ module ADICommunicator:
     ## Power
     usb_conn = new USBCConn
     usb_conn.usb2 ~ uc.usb2
+    usb_conn.usb2.dp.override_net_name = "usb_dp+"
+    usb_conn.usb2.dm.override_net_name = "usb_dm-"
 
     battery_conn = new JST_PH_2P
     power_batt = new Power
@@ -99,6 +101,11 @@ module ADICommunicator:
     _iso_transformer = new HM2102NLT
     _nic.isospi_1 ~ _iso_transformer.logic_1
     _nic.isospi_2 ~ _iso_transformer.logic_2
+    _nic.isospi_1.p.override_net_name = "isospi_safe_1+"
+    _nic.isospi_1.n.override_net_name = "isospi_safe_1-"
+    _nic.isospi_2.p.override_net_name = "isospi_safe_2+"
+    _nic.isospi_2.n.override_net_name = "isospi_safe_2-"
+
     _iso_cap_1 = new Capacitor
     _iso_cap_2 = new Capacitor
     _iso_cap_1.value = 10nF +/- 20%
@@ -106,20 +113,24 @@ module ADICommunicator:
     _iso_transformer.logic_1_center ~ _iso_cap_1.p1; _iso_cap_1.p2 ~ power_3v3.gnd
     _iso_transformer.logic_2_center ~ _iso_cap_2.p1; _iso_cap_2.p2 ~ power_3v3.gnd
 
-    bms_a_conn = new isoSPIConnector
-    bms_a_conn.isospi ~ _iso_transformer.iso_1
-    bms_b_conn = new isoSPIConnector
-    bms_b_conn.isospi ~ _iso_transformer.iso_2
+    bms_1_conn = new isoSPIConnector
+    bms_1_conn.isospi ~ _iso_transformer.iso_1
+    bms_2_conn = new isoSPIConnector
+    bms_2_conn.isospi ~ _iso_transformer.iso_2
+    bms_1_conn.isospi.p.override_net_name = "isospi_hv_1+"
+    bms_1_conn.isospi.n.override_net_name = "isospi_hv_1-"
+    bms_2_conn.isospi.p.override_net_name = "isospi_hv_2+"
+    bms_2_conn.isospi.n.override_net_name = "isospi_hv_2-"
 
     _nic.logic_spi_1.miso ~ _nic.logic_spi_2.miso
     _nic.logic_spi_1.mosi ~ _nic.logic_spi_2.mosi
     _nic.logic_spi_1.sck ~ _nic.logic_spi_2.sck
     # FIXME: This is a hack to get the CS lines to be different
-    uc.io35 ~ _nic.logic_spi_1.miso
-    uc.io36 ~ _nic.logic_spi_1.mosi
-    uc.io37 ~ _nic.logic_spi_1.sck
-    uc.io38 ~ _nic.logic_spi_1.cs
-    uc.io45 ~ _nic.logic_spi_2.cs
+    uc.io9 ~ _nic.logic_spi_1.mosi
+    uc.io46 ~ _nic.logic_spi_1.miso
+    uc.io3 ~ _nic.logic_spi_1.sck
+    uc.io8 ~ _nic.logic_spi_1.cs
+    uc.io18 ~ _nic.logic_spi_2.cs
 
     ## SD Card on Fast SPI interface (SPI2)
     _sd_card = new TF_01A
@@ -128,4 +139,5 @@ module ADICommunicator:
 
     ## General-Purpose LED indicator
     _led = new SK6805EC20
-    uc.io21 ~ _led.din.io
+    uc.io1 ~ _led.din.io
+    power_3v3 ~ _led.power
