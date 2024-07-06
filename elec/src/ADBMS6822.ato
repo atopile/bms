@@ -78,28 +78,27 @@ module ADBMS6822Module:
     # with the one
     logic_power = new Power
     logic_power.gnd ~ _gnd
-
     logic_power.vcc ~ _ic.VDDS
-    logic_power_bypass_1 = new _BypassCapacitor
-    _ic.VDDS ~ logic_power_bypass_1.p1; logic_power_bypass_1.p2 ~ _gnd
     logic_power.vcc ~ _ic.VDDS2
+    logic_power_bypass_1 = new _BypassCapacitor
     logic_power_bypass_2 = new _BypassCapacitor
+    _ic.VDDS ~ logic_power_bypass_1.p1; logic_power_bypass_1.p2 ~ _gnd
     _ic.VDDS2 ~ logic_power_bypass_2.p1; logic_power_bypass_2.p2 ~ _gnd
 
     iso_power = new Power
     iso_power.gnd ~ _gnd
     iso_power.vcc ~ _ic.VDD
-    logic_power_bypass_3 = new _BypassCapacitor
-    _ic.VDDS ~ logic_power_bypass_3.p1; logic_power_bypass_3.p2 ~ _gnd
     iso_power.vcc ~ _ic.VDD2
-    logic_power_bypass_4 = new _BypassCapacitor
-    _ic.VDDS ~ logic_power_bypass_4.p1; logic_power_bypass_4.p2 ~ _gnd
     iso_power.vcc ~ _ic.VP
-    logic_power_bypass_5 = new _BypassCapacitor
-    _ic.VDDS ~ logic_power_bypass_5.p1; logic_power_bypass_5.p2 ~ _gnd
     iso_power.vcc ~ _ic.VP2
+    logic_power_bypass_3 = new _BypassCapacitor
+    logic_power_bypass_4 = new _BypassCapacitor
+    logic_power_bypass_5 = new _BypassCapacitor
     logic_power_bypass_6 = new _BypassCapacitor
-    _ic.VDDS ~ logic_power_bypass_6.p1; logic_power_bypass_6.p2 ~ _gnd
+    _ic.VDD ~ logic_power_bypass_3.p1; logic_power_bypass_3.p2 ~ _gnd
+    _ic.VDD2 ~ logic_power_bypass_4.p1; logic_power_bypass_4.p2 ~ _gnd
+    _ic.VP ~ logic_power_bypass_5.p1; logic_power_bypass_5.p2 ~ _gnd
+    _ic.VP2 ~ logic_power_bypass_6.p1; logic_power_bypass_6.p2 ~ _gnd
 
     logic_spi_1 = new SPI
     logic_spi_1.gnd ~ _gnd
