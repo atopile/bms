@@ -26,13 +26,14 @@ module PowerDiodeOr:
     A diode or gate that combines two power rails, only dropping the 
     """
     diode = new ShottkyDiode
+    diode -> CUS10S30_H3F
     power_in1 = new Power
     power_in2 = new Power
     power_out = new Power
 
     power_in2 ~ power_out
-    power_in.vcc ~ diode.anode; diode.cathode ~ power_out.vcc
-    power_in.gnd ~ power_out.gnd
+    power_in1.vcc ~ diode.anode; diode.cathode ~ power_out.vcc
+    power_in1.gnd ~ power_out.gnd
 
 import Power_AC from "interfaces.ato"
 module FULLBRIDGERECTIFIER:
@@ -47,3 +48,11 @@ module FULLBRIDGERECTIFIER:
     power_in.line1 ~ d1.anode; d1.cathode ~ power_out.vcc; power_out.vcc~ d2.cathode; d2.anode ~ power_in.neutral
     power_in.line1 ~ d4.cathode; d4.anode ~ power_out.gnd; power_out.gnd ~ d3.anode; d3.cathode ~ power_in.neutral
 
+component CUS10S30_H3F from SchottkyDiode:
+    # component CUS10S30_H3F
+    footprint = "SOD-323_L1.8-W1.3-LS2.5-RD"
+    lcsc_id = "C146335"
+    mpn = "C146335"
+    # pins
+    anode ~ pin 2
+    cathode ~ pin 1

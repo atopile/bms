@@ -10,6 +10,8 @@ builds:
     entry: elec/src/ADBMS6830.ato:CellInput
   cell:
     entry: elec/src/cell-sim.ato:Cell
+  cell-sim:
+    entry: elec/src/cell-sim.ato:CellSim
 
 dependencies:
 - name: generics
@@ -36,3 +38,23 @@ dependencies:
   version_spec: '@3719ec970da96df05b6763671993ca2276df968b'
   link_broken: true
   path: elec/src/xt-connectors
+- name: sk6805-ec20
+  version_spec:
+  link_broken: true
+  path: elec/src/sk6805-ec20
+- name: level-shifter
+  version_spec:
+  link_broken: true
+  path: elec/src/level-shifter
+- name: esp32-s3
+  version_spec: '@775b03e7566001d5724b98a5c5d952a887bb550c'
+  link_broken: true
+  path: elec/src/esp32-s3
+- name: lv2842xlvddcr
+  version_spec: '@63615f935a2727e9b8d55e61e7fb02d444641778'
+  link_broken: true
+  path: elec/src/lv2842xlvddcr
+- name: tca9548apwr
+  version_spec: '@16cf66a493a9753b2dd3a816b3719fa4af84e7c5'
+  link_broken: true
+  path: elec/src/tca9548apwr

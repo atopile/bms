@@ -1,9 +1,0 @@
-component BLM15HD182SN1D:
-    # component BLM15HD182SN1D
-    footprint = "L0402"
-    lcsc_id = "C76888"
-    mpn = "C76888"
-    # pins
-    signal _2 ~ pin 2
-    signal _1 ~ pin 1
-

@@ -1,0 +1,9 @@
+component YNR4030_minus_22OM:
+    # component YNR4030_minus_22OM
+    footprint = "IND-SMD_L4.0-W4.0"
+    lcsc_id = "C341013"
+    mpn = "C341013"
+    # pins
+    signal _2 ~ pin 2
+    signal _1 ~ pin 1
+

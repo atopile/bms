@@ -255,7 +255,7 @@
     "last_paths": {
       "gencad": "",
       "idf": "",
-      "netlist": "../../../build/default.net",
+      "netlist": "../../../build/cell-sim.net",
       "plot": "",
       "pos_files": "",
       "specctra_dsn": "",

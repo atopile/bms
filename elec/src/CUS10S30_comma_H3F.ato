@@ -1,0 +1,9 @@
+component CUS10S30_comma_H3F:
+    # component CUS10S30_comma_H3F
+    footprint = "SOD-323_L1.8-W1.3-LS2.5-RD"
+    lcsc_id = "C146335"
+    mpn = "C146335"
+    # pins
+    signal A ~ pin 2
+    signal K ~ pin 1
+
