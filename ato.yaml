@@ -2,8 +2,6 @@ ato-version: ^0.2.0
 builds:
   default:
     entry: elec/src/bms.ato:BMS
-  adbms6830-devboard:
-    entry: elec/src/adbms6830-devboard.ato:Adbms6830Devboard
   adi-communicator:
     entry: elec/src/adi-communicator.ato:ADICommunicator
   cell-input:
