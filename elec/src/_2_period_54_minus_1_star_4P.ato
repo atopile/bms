@@ -1,0 +1,11 @@
+component _2_period_54_minus_1_star_4P:
+    # component _2_period_54_minus_1_star_4P
+    footprint = "HDR-TH_4P-P2.54-V-F"
+    lcsc_id = "C2718488"
+    mpn = "C2718488"
+    # pins
+    signal _1 ~ pin 1
+    signal _2 ~ pin 2
+    signal _3 ~ pin 3
+    signal _4 ~ pin 4
+

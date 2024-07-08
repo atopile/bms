@@ -55,6 +55,6 @@ dependencies:
   link_broken: true
   path: elec/src/lv2842xlvddcr
 - name: tca9548apwr
-  version_spec: '@16cf66a493a9753b2dd3a816b3719fa4af84e7c5'
-  link_broken: true
-  path: elec/src/tca9548apwr
+  version_spec: '@203e282316f071778bfa9405f102b97910dfbceb'
+  link_broken: false
+  path: .ato/modules/tca9548apwr

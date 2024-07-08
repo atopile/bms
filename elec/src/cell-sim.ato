@@ -45,10 +45,17 @@ module CellSim:
     power_3v3 ~ micro.power
     usbc.usb2 ~ micro.usb2
 
+    # LCD
+    lcd = new LCDConnector
+    power_3v3 ~ lcd.power
+    micro.i2c ~ lcd.i2c
+    lcd.address = "0x3C"
+
     # I2C mux
     mux = new TCA9548APWR
     power_3v3 ~ mux.power
     micro.i2c ~ mux.i2c
+    mux.address = "0x70"
 
     i2c_pullup = new I2CPullup
     power_3v3 ~ i2c_pullup.power
@@ -133,6 +140,22 @@ module CellSim:
     cell3._power_3v3.vcc ~ cell3_debug_2.ch3.io
     cell3_debug_2.gnd ~ cell3._power_5v.gnd
 
+module SeriesPowerResistors:
+    # Resistors in series with a power connection
+    vcc_resistor = new Resistor
+    gnd_resistor = new Resistor
+    power_in = new Power
+    power_out = new Power
+
+    power_in.vcc ~ vcc_resistor.p1; vcc_resistor.p2 ~ power_out.vcc
+    power_in.gnd ~ gnd_resistor.p1; gnd_resistor.p2 ~ power_out.gnd
+
+    # Resistor values
+    vcc_resistor.value = 10kohm +/- 5%
+    gnd_resistor.value = 10kohm +/- 5%
+    vcc_resistor.package = "0402"
+    gnd_resistor.package = "0402"
+
 module BananaPower:
     socket_red = new BananaSocketRed
     socket_black = new BananaSocketBlack
@@ -216,6 +239,13 @@ module Cell:
     voltage_led = new SK6805EC20
     current_led = new SK6805EC20
 
+    # addresses:
+    adc.address = "0x48"
+    buck.address = "0x61"
+    ldo.address = "0x60"
+    gpio.address = "0x20"
+    current_sense.address = "0x21"
+
     # Power LEDs
     power_led ~ voltage_led.power
     power_led ~ current_led.power
@@ -289,8 +319,10 @@ module Cell:
     output_relay.power_out ~ power_out
 
     # dmm relay
+    dmm_i_lim_resistors = new SeriesPowerResistors
     current_sense.power_out ~ dmm_relay.power_in
-    dmm_relay.power_out ~ dmm_out
+    dmm_relay.power_out ~ dmm_i_lim_resistors.power_in
+    dmm_i_lim_resistors.power_out ~ dmm_out
 
     # ADC connections
     adc.AIN0 ~ buck.power_out.vcc
@@ -335,6 +367,8 @@ module DigitalBuck from DigitalRegulator:
     power_out.gnd ~ regulator.GND
 
     regulator.VFB ~ feedback_div.out
+
+    dac.A0 ~ power_in.vcc
 
     # Input caps
     input_cap_1 = new Capacitor
@@ -398,6 +432,8 @@ module DigitalLDO from DigitalRegulator:
     power_out.vcc ~ regulator.OUT
     power_out.gnd ~ regulator.GND
 
+    dac.A0 ~ power_in.gnd
+
     # Output cap
     output_cap = new Capacitor
     output_cap.value = 1uF +/- 10%
@@ -413,6 +449,20 @@ module DigitalLDO from DigitalRegulator:
 
     # Feedback
     regulator.FB ~ feedback_div.out
+
+component LCDConnector:
+    # component _2_period_54_minus_1_star_4P
+    footprint = "HDR-TH_4P-P2.54-V-F"
+    lcsc_id = "C2718488"
+    mpn = "C2718488"
+    # pins
+    i2c = new I2C
+    i2c.sda ~ pin 1
+    i2c.scl ~ pin 2
+
+    power = new Power
+    power.vcc ~ pin 3
+    power.gnd ~ pin 4
 
 
 component TPS563201DDCR:
@@ -683,7 +733,9 @@ component MCP4725A0T:
     signal VOUT ~ pin 1
     signal A0 ~ pin 6
 
-    A0 ~ power.gnd
+    # address:
+    # A0 = 0
+
 
 module B1205S_2WR2 from IsolatedRegulator:
     converter = new _B1205S_2WR2
