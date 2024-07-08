@@ -1,5 +1,5 @@
 from "generics/capacitors.ato" import Capacitor
-from "generics/resistors.ato" import Resistor
+from "generics/resistors.ato" import Resistor, I2CPullup
 from "generics/inductors.ato" import Inductor
 from "generics/diodes.ato" import PowerDiodeOr
 from "generics/interfaces.ato" import Power, SPI, I2C, DiffPair
@@ -17,6 +17,8 @@ from "lv2842xlvddcr/lv2842kit.ato" import LV2842Kit
 from "generics/vdivs.ato" import _VDiv
 from "usb-connectors/usb-connectors.ato" import USBCConn
 from "tca9548apwr/elec/src/tca9548apwr.ato" import TCA9548APWR
+from "xt-connectors/xt-connectors.ato" import XT30_Male_Right_Angle
+from "saleae-header/saleae-header.ato" import SaleaeHeader
 
 
 module CellSim:
@@ -30,6 +32,15 @@ module CellSim:
     micro = new ESP32S3
     usbc = new USBCConn
 
+
+    # Power input
+    power_connector = new XT30_Male_Right_Angle
+    power_connector.power ~ power_in
+
+    # DMM output
+    dmm_connector = new BananaPower
+    dmm_connector.power ~ dmm_out
+
     # Micro connections
     power_3v3 ~ micro.power
     usbc.usb2 ~ micro.usb2
@@ -38,6 +49,14 @@ module CellSim:
     mux = new TCA9548APWR
     power_3v3 ~ mux.power
     micro.i2c ~ mux.i2c
+
+    i2c_pullup = new I2CPullup
+    power_3v3 ~ i2c_pullup.power
+    micro.i2c ~ i2c_pullup.i2c
+    i2c_pullup.r_scl.value = 2kohm +/- 20%
+    i2c_pullup.r_sda.value = 2kohm +/- 20%
+    i2c_pullup.r_scl.package = "0402"
+    i2c_pullup.r_sda.package = "0402"
 
     # regulator to 5V
     buck = new LV2842Kit
@@ -93,6 +112,52 @@ module CellSim:
     # Connect power_batt across the stack
     power_batt.vcc ~ cell3.power_out.vcc
     power_batt.gnd ~ cell1.power_out.gnd
+
+    # Debugging
+    i2c_debug = new SaleaeHeader
+    micro.i2c ~ i2c_debug.i2c
+    power_5v.vcc ~ i2c_debug.ch2.io
+    power_3v3.vcc ~ i2c_debug.ch3.io
+    i2c_debug.gnd ~ power_in.gnd
+
+    cell3_debug_1 = new SaleaeHeader
+    cell3._iso_i2c ~ cell3_debug_1.i2c
+    cell3.buck.power_out.vcc ~ cell3_debug_1.ch2.io
+    cell3.ldo.power_out.vcc ~ cell3_debug_1.ch3.io
+    cell3_debug_1.gnd ~ cell3._power_5v.gnd
+
+    cell3_debug_2 = new SaleaeHeader
+    cell3.current_sense.output ~ cell3_debug_2.ch0.io
+    cell3.output_relay.input ~ cell3_debug_2.ch1.io
+    cell3.dmm_relay.input ~ cell3_debug_2.ch2.io
+    cell3._power_3v3.vcc ~ cell3_debug_2.ch3.io
+    cell3_debug_2.gnd ~ cell3._power_5v.gnd
+
+module BananaPower:
+    socket_red = new BananaSocketRed
+    socket_black = new BananaSocketBlack
+
+    power = new Power
+    power.vcc ~ socket_red.p1
+    power.gnd ~ socket_black.p1
+
+component BananaSocketBlack:
+    # component _24_period_243_period_2
+    footprint = "CONN-TH_24.243.2"
+    lcsc_id = "C7437322"
+    mpn = "C7437322"
+    # pins
+    signal p1 ~ pin 1
+    p1 ~ pin 2
+
+component BananaSocketRed:
+    # component _24_period_243_period_1
+    footprint = "AUDIO-TH_24.243.1"
+    lcsc_id = "C7437321"
+    mpn = "C7437321"
+    # pins
+    signal p1 ~ pin 1
+    p1 ~ pin 2
 
 
 interface CellJumper:
@@ -162,6 +227,7 @@ module Cell:
 
     # Jumper connections
     cell_up.cell ~ filter.power_out.vcc
+    cell_down.cell ~ filter.power_out.gnd
 
     # Digital i2c isolator
     i2c ~ digital_isolator.i2c_non_isolated
@@ -235,8 +301,8 @@ module Cell:
     # GPIO expander
     gpio.P7 ~ output_relay.input
     gpio.P6 ~ dmm_relay.input
-    gpio.P0 ~ buck.enable
-    gpio.P1 ~ ldo.enable
+    gpio.P2 ~ buck.enable
+    gpio.P3 ~ ldo.enable
 
 
 module DigitalRegulator from Regulator:

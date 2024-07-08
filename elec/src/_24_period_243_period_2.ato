@@ -1,0 +1,9 @@
+component _24_period_243_period_2:
+    # component _24_period_243_period_2
+    footprint = "CONN-TH_24.243.2"
+    lcsc_id = "C7437322"
+    mpn = "C7437322"
+    # pins
+    signal _1 ~ pin 1
+    signal _2 ~ pin 2
+

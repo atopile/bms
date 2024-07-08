@@ -1,0 +1,9 @@
+component _24_period_243_period_1:
+    # component _24_period_243_period_1
+    footprint = "AUDIO-TH_24.243.1"
+    lcsc_id = "C7437321"
+    mpn = "C7437321"
+    # pins
+    signal _1 ~ pin 1
+    signal _2 ~ pin 2
+
