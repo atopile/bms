@@ -20,6 +20,7 @@ from "tca9548apwr/elec/src/tca9548apwr.ato" import TCA9548APWR
 from "xt-connectors/xt-connectors.ato" import XT30_Male_Right_Angle
 from "saleae-header/saleae-header.ato" import SaleaeHeader
 
+#TODO: add button for manual control?
 
 module CellSim:
     power_in = new Power
