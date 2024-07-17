@@ -1,0 +1,81 @@
+
+
+module SpaceBMS:
+    ## 
+
+
+    # Connectors
+    board_to_board = new BoardToBoard50PinMale
+    battery_out = new BatteryConnector
+    can_connector = new CANConnector
+    inhibit_connector = new InhibitConnector
+
+    # Power supplies
+    regulator_5v = new Regulator
+    regulator_3v3 = new Regulator
+    regulator_1v2 = new Regulator
+
+    # Power interfaces
+    power_batt = new Power                              # power from battery
+    power_batt_switched = new Power                     # power after inhibit switch
+    power_batt_output = new Power                       # output to satellite
+    power_5v = new Power                                # power for BMS
+    power_3v3 = new Power                               # power for IOs
+    power_1v2 = new Power                               # power for microcontroller
+
+    # Connect supplies and interfaces
+    board_to_board.power_batt ~ power_batt
+    power_batt.voltage = 
+
+    # 5V regulator
+    power_batt ~ regulator_5v.power_in
+    regulator_5v.power_out ~ power_5v
+
+    regulator_5v.power_in.voltage = power_batt.voltage
+    regulator_5v.power_out.voltage = 4.6V to 5.5V       # From ADBMS datasheet
+
+    # 3.3V regulator
+    power_5v ~ regulator_3v3.power_in
+    regulator_3v3.power_out ~ power_3v3
+
+    # 1.2V regulator
+    power_3v3 ~ regulator_1v2.power_in
+    regulator_1v2.power_out ~ power_1v2
+
+    # Switches
+    inhibit_switch = new InhibitSwitch
+    battery_switch = new BatterySwitch
+    precharge_switch = new PrechargeSwitch
+    heater_switch = new HeaterSwitch
+
+    # Connect switches
+    # Inhibit switch
+    power_batt ~ inhibit_switch.power_in
+    inhibit_switch.power_out ~ power_batt_switched
+
+    # Battery switch
+    power_batt_switched ~ battery_switch.power_in
+    battery_switch.power_out ~ power_batt_output
+
+    # Precharge switch
+    power_batt_switched ~ precharge_switch.power_in
+    precharge_switch.power_out ~ power_batt_output
+
+    # Sensors
+    bms = new BMS
+    current_sensor = new CurrentSensor
+    temp_1 = new TempSensor
+    temp_2 = new TempSensor
+    temp_3 = new TempSensor
+    temp_4 = new TempSensor
+
+    # Connect sensors
+
+
+    # Communication
+    can = new CAN
+
+    # Microcontroller
+    micro = new Microcontroller
+
+
