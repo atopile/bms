@@ -45,6 +45,7 @@ SPISettings settings(1000000, MSBFIRST, SPI_MODE3); // 1 MHz clock, MSB first, S
 #define RDCVE ((uint16_t)0x0009u)
 #define RDCVF ((uint16_t)0x000Bu)
 #define RDCVALL ((uint16_t)0x000Cu)
+#define RDSID    	((uint16_t)0x002C)
 
 /* Pre-computed CRC15 Table */
 static const uint16_t Adbms6948_Crc15Table[256] = {0x0u, 0xc599u, 0xceabu, 0xb32u, 0xd8cfu, 0x1d56u, 0x1664u, 0xd3fdu, 0xf407u, 0x319eu, 0x3aacu,
@@ -176,63 +177,42 @@ void sendCommand(uint16_t nCommand)
 
 // CMD0 = 00000 CMD10 CMD9 CMD8
 // CMD1 = CMD7 CMD6 CMD5 CMD4 CMD3 CMD2 CMD1 CMD0
-void writeData(uint16_t nCommand, uint8_t *pTxBuf)
+void writeData(uint16_t nCommand, uint8_t *pTxBuf, uint8_t len)
 {
-    uint8_t aTxBuf[ADBMS6948_CMD_DATA_LEN +
-                   (ADBMS6948_REG_DATA_LEN_WITH_PEC * ADBMS6948_MAX_NO_OF_DEVICES_IN_DAISY_CHAIN)];
-    uint8_t nDevIndex, nByteIndex, nNoOfDevices;
-    uint8_t *pDevCfgArray;
-    uint16_t nCfgPec, nCmdPec;
-    uint8_t nLen = 0u;
-
-    nNoOfDevices = 1; // Assuming a single device for now
+    uint16_t nCmdPec;
+    uint8_t bufferSize = 4 + len + 2;
+    uint8_t aCmd[bufferSize];
 
     // Populate the command part of the buffer
-    aTxBuf[nLen++] = (uint8_t)((nCommand & 0xFF00U) >> 8U);
-    aTxBuf[nLen++] = (uint8_t)(nCommand & 0x00FFU);
+    aCmd[0] = (uint8_t)((nCommand & 0xFF00u) >> ADBMS6948_SHIFT_BY_8);
+    aCmd[1] = (uint8_t)((nCommand & 0x00FFu));
 
     // Calculate the 15-bit PEC for the command bytes
-    nCmdPec = calculatePEC15(&aTxBuf[0], 2u);
+    nCmdPec = (uint16_t)calculatePEC15(&aCmd[0], 2u);
 
-    // Append the command PEC to the transmit buffer
-    aTxBuf[nLen++] = (uint8_t)(nCmdPec >> 8U);
-    aTxBuf[nLen++] = (uint8_t)(nCmdPec);
+    // Append the PEC to the command buffer
+    aCmd[2] = (uint8_t)(nCmdPec >> ADBMS6948_SHIFT_BY_8);
+    aCmd[3] = (uint8_t)(nCmdPec);
 
-    // Fill the data part of the buffer for the single device
-    pDevCfgArray = pTxBuf; // Point to the start of pTxBuf
-    for (nByteIndex = 0u; nByteIndex < ADBMS6948_REG_GRP_LEN; nByteIndex++)
+    // Append the data to the command buffer
+    for (int i = 0; i < len; i++)
     {
-        aTxBuf[nLen++] = *(pDevCfgArray + nByteIndex);
+        aCmd[4 + i] = pTxBuf[i];
     }
 
-    // Calculate the 10-bit PEC for the transmit data bytes for the single device
-    nCfgPec = calculatePEC10(pDevCfgArray, false, ADBMS6948_REG_GRP_LEN);
+    // Calculate the PEC for the data
+    uint16_t dataPec = calculatePEC10(pTxBuf, len, false);
 
-    // Append the data PEC to the transmit buffer
-    aTxBuf[nLen++] = (uint8_t)((nCfgPec & 0x0300u) >> 8u);
-    aTxBuf[nLen++] = (uint8_t)(nCfgPec & 0x00FFu);
-
-    // Debug: Print the aTxBuf contents
-    Serial.print("aTxBuf: ");
-    for (int i = 0; i < nLen; i++)
-    {
-        Serial.print(aTxBuf[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
+    // Append the data PEC to the command buffer
+    aCmd[4 + len] = (uint8_t)(dataPec >> ADBMS6948_SHIFT_BY_8);
+    aCmd[4 + len + 1] = (uint8_t)(dataPec);
 
     // Start SPI transaction
-    SPI1.beginTransaction(settings);
     digitalWrite(SPI1_CS, LOW);
-
-    // Send the data
-    SPI1.transfer(aTxBuf, nLen);
-
-    // End SPI transaction
+    SPI1.beginTransaction(settings);
+    SPI1.transfer(aCmd, bufferSize);
     SPI1.endTransaction();
     digitalWrite(SPI1_CS, HIGH);
-
-    return;
 }
 
 void readData(uint16_t nCommand, uint8_t *pRxBuf, uint8_t numBytes)
@@ -261,11 +241,11 @@ void readData(uint16_t nCommand, uint8_t *pRxBuf, uint8_t numBytes)
     }
 
     // Start SPI transaction
-    SPI1.beginTransaction(settings);
     digitalWrite(SPI1_CS, LOW);
+    SPI1.beginTransaction(settings);
 
     // Send the data
-    SPI1.transfer(aCmd, 12); // Correct buffer size
+    SPI1.transfer(aCmd, bufferSize); // Correct buffer size
 
     // End SPI transaction
     digitalWrite(SPI1_CS, HIGH);
@@ -324,7 +304,6 @@ void setup()
     Serial.begin(115200);
     SPI1.begin();
     pinMode(SPI1_CS, OUTPUT);
-    digitalWrite(SPI1_CS, LOW);
 }
 
 void loop()
@@ -339,49 +318,35 @@ void loop()
     // delay(100);
 
     uint16_t nCommand = ADBMS6948_CMD_WRCFGA;
-    uint8_t data[1] = {0x80};
-    uint16_t nCmdPec;
-    uint8_t bytesToWrite = 1;
-    uint8_t bufferSize = 4 + bytesToWrite + 2;
-    uint8_t aCmd[bufferSize];
 
-    // Populate the command part of the buffer
-    aCmd[0] = (uint8_t)((nCommand & 0xFF00u) >> ADBMS6948_SHIFT_BY_8);
-    aCmd[1] = (uint8_t)((nCommand & 0x00FFu));
+    uint8_t data[] = {
+        0x83,
+        0x00,
+        0x00,
+        0xFF,
+        0x03,
+        0x00
+    };
 
-    // Calculate the 15-bit PEC for the command bytes
-    nCmdPec = (uint16_t)calculatePEC15(&aCmd[0], 2u);
+    writeData(nCommand, data, 6);
 
-    // Append the PEC to the command buffer
-    aCmd[2] = (uint8_t)(nCmdPec >> ADBMS6948_SHIFT_BY_8);
-    aCmd[3] = (uint8_t)(nCmdPec);
 
-    // Append the data to the command buffer
-    aCmd[4] = data[0];
-
-    // Calculate the PEC for the data
-    uint16_t dataPec = calculatePEC10(data, bytesToWrite, false);
-
-    // Append the data PEC to the command buffer
-    aCmd[5] = (uint8_t)(dataPec >> ADBMS6948_SHIFT_BY_8);
-    aCmd[6] = (uint8_t)(dataPec);
-
-    // Start SPI transaction
-    digitalWrite(SPI1_CS, LOW);
-    SPI1.beginTransaction(settings);
-    SPI1.transfer(aCmd, bufferSize);
-    SPI1.endTransaction();
-    digitalWrite(SPI1_CS, HIGH);
-
-    delay(1000);
-
-    // // read back the register
-    // uint8_t rxData[1];
-    // readData(nCommand, rxData, 1);
-
-    // Serial.print("Data: ");
-    // Serial.println(data[0], HEX);
     // delay(1000);
+    // sendCommand(ADBMS6948_CMD_ADCV);
+    delay(100);
+    // read back the register
+    uint8_t rxdata[8];
+    // data[0] = 0x00;
+    readData(0x0002, rxdata, 6);
+    // readData(RDCVA, data, 6);
 
-    // void readData(uint16_t nCommand, uint8_t *pRxBuf, uint8_t numBytes)
+
+    Serial.print("Data: ");
+    for (int i = 0; i < 6; i++)
+    {
+        Serial.print(rxdata[i], HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
+    delay(1000);
 }
