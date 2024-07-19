@@ -12,32 +12,44 @@ arduino::MbedSPI SPI1(SPI1_MISO, SPI1_MOSI, SPI1_SCK);
 SPISettings settings(1000000, MSBFIRST, SPI_MODE3); // 1 MHz clock, MSB first, SPI mode 3
 
 // Commands and constants
-#define ADBMS6948_CMD_ADCV ((uint16_t)0x0260u)
-#define ADBMS6948_CMD_RDACALL ((uint16_t)0x004Cu)
 #define ADBMS6948_SHIFT_BY_8 ((uint8_t)8u)
 #define ADBMS6948_RDALL_CELLVOLTAGES_BYTES ((uint8_t)34u)
-#define ADBMS6948_CMD_DATA_LEN ((uint8_t)0x04u)
+#define DATA_LEN ((uint8_t)0x04u)
 #define ADBMS6948_REG_DATA_LEN_WITH_PEC ((uint8_t)0x08u)
 #define ADBMS6948_MAX_NO_OF_DEVICES_IN_DAISY_CHAIN (1U)
 #define ADBMS6948_REG_GRP_LEN ((uint8_t)0x06u)
-#define ADBMS6948_CMD_WRCFGA ((uint16_t)0x0001u)
-#define ADBMS6948_CMD_WRCFGB ((uint16_t)0x0024u)
-#define ADBMS6948_CMD_WRCFGC ((uint16_t)0x0081u)
-#define ADBMS6948_CMD_WRCFGD ((uint16_t)0x00A4u)
-#define ADBMS6948_CMD_WRCFGE ((uint16_t)0x0073u)
-#define ADBMS6948_CMD_WRCFGF ((uint16_t)0x0075u)
-#define ADBMS6948_CMD_WRCFGG ((uint16_t)0x0077u)
-#define ADBMS6948_CMD_WRCFGH ((uint16_t)0x0079u)
-#define ADBMS6948_CMD_WRCFGI ((uint16_t)0x007Bu)
-#define ADBMS6948_CMD_RDCFGA ((uint16_t)0x0002u)
-#define ADBMS6948_CMD_RDCFGB ((uint16_t)0x0026u)
-#define ADBMS6948_CMD_RDCFGC ((uint16_t)0x0082u)
-#define ADBMS6948_CMD_RDCFGD ((uint16_t)0x00A6u)
-#define ADBMS6948_CMD_RDCFGE ((uint16_t)0x0074u)
-#define ADBMS6948_CMD_RDCFGF ((uint16_t)0x0076u)
-#define ADBMS6948_CMD_RDCFGG ((uint16_t)0x0078u)
-#define ADBMS6948_CMD_RDCFGH ((uint16_t)0x007Au)
-#define ADBMS6948_CMD_RDCFGI ((uint16_t)0x007Cu)
+
+// Register map
+#define ADCV ((uint16_t)0x0260u)
+#define ADSV ((uint16_t)0x0168u)
+#define ADI1 ((uint16_t)0x0200u)
+#define ADI2 ((uint16_t)0x0108u)
+#define ADCIV ((uint16_t)0x240u)
+#define ADAX ((uint16_t)0x0410u)
+#define ADAX2 ((uint16_t)0x0400u)
+#define MUTE ((uint16_t)0x0028u)
+#define UNMUTE ((uint16_t)0x0029u)
+#define RDACALL ((uint16_t)0x004Cu)
+#define WRCFGA ((uint16_t)0x0001u)
+#define WRCFGB ((uint16_t)0x0024u)
+#define WRCFGC ((uint16_t)0x0081u)
+#define WRCFGD ((uint16_t)0x00A4u)
+#define WRCFGE ((uint16_t)0x0073u)
+#define WRCFGF ((uint16_t)0x0075u)
+#define WRCFGG ((uint16_t)0x0077u)
+#define WRCFGH ((uint16_t)0x0079u)
+#define WRCFGI ((uint16_t)0x007Bu)
+#define RDCFGA ((uint16_t)0x0002u)
+#define RDCFGB ((uint16_t)0x0026u)
+#define RDCFGC ((uint16_t)0x0082u)
+#define RDCFGD ((uint16_t)0x00A6u)
+#define RDCFGE ((uint16_t)0x0074u)
+#define RDCFGF ((uint16_t)0x0076u)
+#define RDCFGG ((uint16_t)0x0078u)
+#define RDCFGH ((uint16_t)0x007Au)
+#define RDCFGI ((uint16_t)0x007Cu)
+
+// CADC Registers
 #define RDCVA ((uint16_t)0x0004u)
 #define RDCVB ((uint16_t)0x0006u)
 #define RDCVC ((uint16_t)0x0008u)
@@ -45,32 +57,66 @@ SPISettings settings(1000000, MSBFIRST, SPI_MODE3); // 1 MHz clock, MSB first, S
 #define RDCVE ((uint16_t)0x0009u)
 #define RDCVF ((uint16_t)0x000Bu)
 #define RDCVALL ((uint16_t)0x000Cu)
-#define RDSID    	((uint16_t)0x002C)
+
+// SADC Registers
+#define RDSVA ((uint16_t)0x0003u)
+#define RDSVB ((uint16_t)0x0005u)
+#define RDSVC ((uint16_t)0x0007u)
+#define RDSVD ((uint16_t)0x000Du)
+#define RDSVE ((uint16_t)0x000Eu)
+#define RDSVF ((uint16_t)0x000Fu)
+#define RDSVALL ((uint16_t)0x0010u)
+
+// CADC Filtered Registers
+#define RDFCA ((uint16_t)0x0012u)
+#define RDFCB ((uint16_t)0x00013u)
+#define RDFCC ((uint16_t)0x0014u)
+#define RDFCD ((uint16_t)0x0015u)
+#define RDFCE ((uint16_t)0x0016u)
+#define RDFCF ((uint16_t)0x0017u)
+#define RDFCALL ((uint16_t)0x0018u)
+
+// AUX Registers
+#define RDAUXA ((uint16_t)0x0019u)
+#define RDAUXB ((uint16_t)0x001Au)
+#define RDAUXC ((uint16_t)0x001Bu)
+#define RDAUXD ((uint16_t)0x001Fu)
+
+// ID Register
+#define RDSID ((uint16_t)0x002C)
+
+// Balance PWM Registers
+#define WRPWMA ((uint16_t)0x0020u)
+#define RDPWMA ((uint16_t)0x0022u)
+#define WRPWMB ((uint16_t)0x0021u)
+#define RDPWMB ((uint16_t)0x0023u)
 
 /* Pre-computed CRC15 Table */
-static const uint16_t Adbms6948_Crc15Table[256] = {0x0u, 0xc599u, 0xceabu, 0xb32u, 0xd8cfu, 0x1d56u, 0x1664u, 0xd3fdu, 0xf407u, 0x319eu, 0x3aacu,
-                                                   0xff35u, 0x2cc8u, 0xe951u, 0xe263u, 0x27fau, 0xad97u, 0x680eu, 0x633cu, 0xa6a5u, 0x7558u, 0xb0c1u,
-                                                   0xbbf3u, 0x7e6au, 0x5990u, 0x9c09u, 0x973bu, 0x52a2u, 0x815fu, 0x44c6u, 0x4ff4u, 0x8a6du, 0x5b2eu,
-                                                   0x9eb7u, 0x9585u, 0x501cu, 0x83e1u, 0x4678u, 0x4d4au, 0x88d3u, 0xaf29u, 0x6ab0u, 0x6182u, 0xa41bu,
-                                                   0x77e6u, 0xb27fu, 0xb94du, 0x7cd4u, 0xf6b9u, 0x3320u, 0x3812u, 0xfd8bu, 0x2e76u, 0xebefu, 0xe0ddu,
-                                                   0x2544u, 0x02beu, 0xc727u, 0xcc15u, 0x098cu, 0xda71u, 0x1fe8u, 0x14dau, 0xd143u, 0xf3c5u, 0x365cu,
-                                                   0x3d6eu, 0xf8f7u, 0x2b0au, 0xee93u, 0xe5a1u, 0x2038u, 0x07c2u, 0xc25bu, 0xc969u, 0x0cf0u, 0xdf0du,
-                                                   0x1a94u, 0x11a6u, 0xd43fu, 0x5e52u, 0x9bcbu, 0x90f9u, 0x5560u, 0x869du, 0x4304u, 0x4836u, 0x8dafu,
-                                                   0xaa55u, 0x6fccu, 0x64feu, 0xa167u, 0x729au, 0xb703u, 0xbc31u, 0x79a8u, 0xa8ebu, 0x6d72u, 0x6640u,
-                                                   0xa3d9u, 0x7024u, 0xb5bdu, 0xbe8fu, 0x7b16u, 0x5cecu, 0x9975u, 0x9247u, 0x57deu, 0x8423u, 0x41bau,
-                                                   0x4a88u, 0x8f11u, 0x057cu, 0xc0e5u, 0xcbd7u, 0x0e4eu, 0xddb3u, 0x182au, 0x1318u, 0xd681u, 0xf17bu,
-                                                   0x34e2u, 0x3fd0u, 0xfa49u, 0x29b4u, 0xec2du, 0xe71fu, 0x2286u, 0xa213u, 0x678au, 0x6cb8u, 0xa921u,
-                                                   0x7adcu, 0xbf45u, 0xb477u, 0x71eeu, 0x5614u, 0x938du, 0x98bfu, 0x5d26u, 0x8edbu, 0x4b42u, 0x4070u,
-                                                   0x85e9u, 0x0f84u, 0xca1du, 0xc12fu, 0x04b6u, 0xd74bu, 0x12d2u, 0x19e0u, 0xdc79u, 0xfb83u, 0x3e1au, 0x3528u,
-                                                   0xf0b1u, 0x234cu, 0xe6d5u, 0xede7u, 0x287eu, 0xf93du, 0x3ca4u, 0x3796u, 0xf20fu, 0x21f2u, 0xe46bu, 0xef59u,
-                                                   0x2ac0u, 0x0d3au, 0xc8a3u, 0xc391u, 0x0608u, 0xd5f5u, 0x106cu, 0x1b5eu, 0xdec7u, 0x54aau, 0x9133u, 0x9a01u,
-                                                   0x5f98u, 0x8c65u, 0x49fcu, 0x42ceu, 0x8757u, 0xa0adu, 0x6534u, 0x6e06u, 0xab9fu, 0x7862u, 0xbdfbu, 0xb6c9u,
-                                                   0x7350u, 0x51d6u, 0x944fu, 0x9f7du, 0x5ae4u, 0x8919u, 0x4c80u, 0x47b2u, 0x822bu, 0xa5d1u, 0x6048u, 0x6b7au,
-                                                   0xaee3u, 0x7d1eu, 0xb887u, 0xb3b5u, 0x762cu, 0xfc41u, 0x39d8u, 0x32eau, 0xf773u, 0x248eu, 0xe117u, 0xea25u,
-                                                   0x2fbcu, 0x0846u, 0xcddfu, 0xc6edu, 0x0374u, 0xd089u, 0x1510u, 0x1e22u, 0xdbbbu, 0x0af8u, 0xcf61u, 0xc453u,
-                                                   0x01cau, 0xd237u, 0x17aeu, 0x1c9cu, 0xd905u, 0xfeffu, 0x3b66u, 0x3054u, 0xf5cdu, 0x2630u, 0xe3a9u, 0xe89bu,
-                                                   0x2d02u, 0xa76fu, 0x62f6u, 0x69c4u, 0xac5du, 0x7fa0u, 0xba39u, 0xb10bu, 0x7492u, 0x5368u, 0x96f1u, 0x9dc3u,
-                                                   0x585au, 0x8ba7u, 0x4e3eu, 0x450cu, 0x8095u};
+static const uint16_t Adbms6948_Crc15Table[256] =
+    {
+        0x0u, 0xc599u, 0xceabu, 0xb32u, 0xd8cfu, 0x1d56u, 0x1664u, 0xd3fdu, 0xf407u, 0x319eu, 0x3aacu,
+        0xff35u, 0x2cc8u, 0xe951u, 0xe263u, 0x27fau, 0xad97u, 0x680eu, 0x633cu, 0xa6a5u, 0x7558u, 0xb0c1u,
+        0xbbf3u, 0x7e6au, 0x5990u, 0x9c09u, 0x973bu, 0x52a2u, 0x815fu, 0x44c6u, 0x4ff4u, 0x8a6du, 0x5b2eu,
+        0x9eb7u, 0x9585u, 0x501cu, 0x83e1u, 0x4678u, 0x4d4au, 0x88d3u, 0xaf29u, 0x6ab0u, 0x6182u, 0xa41bu,
+        0x77e6u, 0xb27fu, 0xb94du, 0x7cd4u, 0xf6b9u, 0x3320u, 0x3812u, 0xfd8bu, 0x2e76u, 0xebefu, 0xe0ddu,
+        0x2544u, 0x02beu, 0xc727u, 0xcc15u, 0x098cu, 0xda71u, 0x1fe8u, 0x14dau, 0xd143u, 0xf3c5u, 0x365cu,
+        0x3d6eu, 0xf8f7u, 0x2b0au, 0xee93u, 0xe5a1u, 0x2038u, 0x07c2u, 0xc25bu, 0xc969u, 0x0cf0u, 0xdf0du,
+        0x1a94u, 0x11a6u, 0xd43fu, 0x5e52u, 0x9bcbu, 0x90f9u, 0x5560u, 0x869du, 0x4304u, 0x4836u, 0x8dafu,
+        0xaa55u, 0x6fccu, 0x64feu, 0xa167u, 0x729au, 0xb703u, 0xbc31u, 0x79a8u, 0xa8ebu, 0x6d72u, 0x6640u,
+        0xa3d9u, 0x7024u, 0xb5bdu, 0xbe8fu, 0x7b16u, 0x5cecu, 0x9975u, 0x9247u, 0x57deu, 0x8423u, 0x41bau,
+        0x4a88u, 0x8f11u, 0x057cu, 0xc0e5u, 0xcbd7u, 0x0e4eu, 0xddb3u, 0x182au, 0x1318u, 0xd681u, 0xf17bu,
+        0x34e2u, 0x3fd0u, 0xfa49u, 0x29b4u, 0xec2du, 0xe71fu, 0x2286u, 0xa213u, 0x678au, 0x6cb8u, 0xa921u,
+        0x7adcu, 0xbf45u, 0xb477u, 0x71eeu, 0x5614u, 0x938du, 0x98bfu, 0x5d26u, 0x8edbu, 0x4b42u, 0x4070u,
+        0x85e9u, 0x0f84u, 0xca1du, 0xc12fu, 0x04b6u, 0xd74bu, 0x12d2u, 0x19e0u, 0xdc79u, 0xfb83u, 0x3e1au, 0x3528u,
+        0xf0b1u, 0x234cu, 0xe6d5u, 0xede7u, 0x287eu, 0xf93du, 0x3ca4u, 0x3796u, 0xf20fu, 0x21f2u, 0xe46bu, 0xef59u,
+        0x2ac0u, 0x0d3au, 0xc8a3u, 0xc391u, 0x0608u, 0xd5f5u, 0x106cu, 0x1b5eu, 0xdec7u, 0x54aau, 0x9133u, 0x9a01u,
+        0x5f98u, 0x8c65u, 0x49fcu, 0x42ceu, 0x8757u, 0xa0adu, 0x6534u, 0x6e06u, 0xab9fu, 0x7862u, 0xbdfbu, 0xb6c9u,
+        0x7350u, 0x51d6u, 0x944fu, 0x9f7du, 0x5ae4u, 0x8919u, 0x4c80u, 0x47b2u, 0x822bu, 0xa5d1u, 0x6048u, 0x6b7au,
+        0xaee3u, 0x7d1eu, 0xb887u, 0xb3b5u, 0x762cu, 0xfc41u, 0x39d8u, 0x32eau, 0xf773u, 0x248eu, 0xe117u, 0xea25u,
+        0x2fbcu, 0x0846u, 0xcddfu, 0xc6edu, 0x0374u, 0xd089u, 0x1510u, 0x1e22u, 0xdbbbu, 0x0af8u, 0xcf61u, 0xc453u,
+        0x01cau, 0xd237u, 0x17aeu, 0x1c9cu, 0xd905u, 0xfeffu, 0x3b66u, 0x3054u, 0xf5cdu, 0x2630u, 0xe3a9u, 0xe89bu,
+        0x2d02u, 0xa76fu, 0x62f6u, 0x69c4u, 0xac5du, 0x7fa0u, 0xba39u, 0xb10bu, 0x7492u, 0x5368u, 0x96f1u, 0x9dc3u,
+        0x585au, 0x8ba7u, 0x4e3eu, 0x450cu, 0x8095u};
 
 /* Pre-computed CRC10 Table */
 static const uint16_t Adbms6948_Crc10Table[256] =
@@ -173,10 +219,6 @@ void sendCommand(uint16_t nCommand)
     digitalWrite(SPI1_CS, HIGH);
 }
 
-// CMD0 CMD1 PEC0 PEC1 Data0 .. DataN DataPEC0 DataPEC1
-
-// CMD0 = 00000 CMD10 CMD9 CMD8
-// CMD1 = CMD7 CMD6 CMD5 CMD4 CMD3 CMD2 CMD1 CMD0
 void writeData(uint16_t nCommand, uint8_t *pTxBuf, uint8_t len)
 {
     uint16_t nCmdPec;
@@ -271,7 +313,8 @@ float convertToVoltage(uint8_t highByte, uint8_t lowByte)
 void measureVoltages(uint8_t cellVoltageRegisters[])
 {
     // Send ADCV command
-    sendCommand(ADBMS6948_CMD_ADCV);
+    sendCommand(ADCV);
+    sendCommand(ADSV);
 
     // Wait for the ADC to finish
     delay(10);
@@ -299,6 +342,41 @@ void measureVoltages(uint8_t cellVoltageRegisters[])
     Serial.println();
 }
 
+void balanceCells(uint8_t balancePWMs[8], uint8_t timeout)
+{
+    // Write the balance PWMs
+    uint8_t pwma_data[6];
+    for (int i = 0; i < 6; i++)
+    {
+        pwma_data[i] = balancePWMs[i];
+    }
+    writeData(WRPWMA, pwma_data, 6);
+
+    // put the last 2 bytes into pwmb_data
+    uint8_t pwmb_data[6];
+    for (int i = 0; i < 2; i++)
+    {
+        pwmb_data[i] = balancePWMs[i + 6];
+    }
+
+    // fill the rest with 0xFF
+    for (int i = 2; i < 6; i++)
+    {
+        pwmb_data[i] = 0xFF;
+    }
+    writeData(WRPWMB, pwmb_data, 6);
+
+    // Set the balance timeout
+
+    // Read the CFGB register
+    uint8_t cfgb_data[6];
+    readData(RDCFGB, cfgb_data, 6);
+
+    // Modify the DCTO value, set 4th byte to timeout
+    cfgb_data[3] = timeout;
+    writeData(WRCFGB, cfgb_data, 6);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -308,45 +386,35 @@ void setup()
 
 void loop()
 {
-    // // Define the register addresses
-    // uint8_t cellVoltageRegisters[] = {RDCVA, RDCVB, RDCVC, RDCVD, RDCVE, RDCVF};
+    // Measure CADC (unfiltered)
+    uint8_t cellVoltageRegisters[] = {RDCVA, RDCVB, RDCVC, RDCVD, RDCVE, RDCVF};
+    Serial.print("CADC:  ");
+    measureVoltages(cellVoltageRegisters);
 
-    // // Measure voltages
-    // measureVoltages(cellVoltageRegisters);
+    // Measure CADCV (filtered)
+    uint8_t cellVoltageRegistersFiltered[] = {RDFCA, RDFCB, RDFCC, RDFCD, RDFCE, RDFCF};
+    Serial.print("CADCF: ");
+    measureVoltages(cellVoltageRegistersFiltered);
 
-    // // Wait before next measurement
-    // delay(100);
+    // Measure SADC
+    uint8_t switchVoltageRegisters[] = {RDSVA, RDSVB, RDSVC, RDSVD, RDSVE, RDSVF};
+    Serial.print("SADC:  ");
+    measureVoltages(switchVoltageRegisters);
 
-    uint16_t nCommand = ADBMS6948_CMD_WRCFGA;
+    // Balance cells
+    uint8_t balancePWMs[8] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}; // all on
+    // uint8_t balancePWMs[8] = {0x77, 0x77, 0x77, 0x77 ,0x77, 0x77, 0x77, 0x77}; // 50% duty cycle
+    // uint8_t balancePWMs[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // all off
+    balanceCells(balancePWMs, 0b0011111); // max timeout
 
-    uint8_t data[] = {
-        0x83,
-        0x00,
-        0x00,
-        0xFF,
-        0x03,
-        0x00
-    };
+    // Read temperatures
+    // Measure command
+    sendCommand(ADAX);
+    delay(10);
 
-    writeData(nCommand, data, 6);
+    // Read AUX registers
 
+    // Read Shunt current
 
-    // delay(1000);
-    // sendCommand(ADBMS6948_CMD_ADCV);
-    delay(100);
-    // read back the register
-    uint8_t rxdata[8];
-    // data[0] = 0x00;
-    readData(0x0002, rxdata, 6);
-    // readData(RDCVA, data, 6);
-
-
-    Serial.print("Data: ");
-    for (int i = 0; i < 6; i++)
-    {
-        Serial.print(rxdata[i], HEX);
-        Serial.print(" ");
-    }
-    Serial.println();
     delay(1000);
 }
