@@ -342,6 +342,36 @@ void measureVoltages(uint8_t cellVoltageRegisters[])
     Serial.println();
 }
 
+void measureAuxVoltages(uint8_t auxRegisters[])
+{
+    // Measure command
+    sendCommand(ADAX);
+    delay(20);
+
+    // Read AUX registers
+    float auxVoltages[10];
+    uint8_t n = 0;
+
+    for (int i = 0; i < 3; i++)
+    {
+        uint8_t data[6];
+        readData(auxRegisters[i], data, 6);
+        auxVoltages[n] = convertToVoltage(data[1], data[0]);
+        auxVoltages[n + 1] = convertToVoltage(data[3], data[2]);
+        auxVoltages[n + 2] = convertToVoltage(data[5], data[4]);
+        n += 3;
+    }
+
+    // Print AUX voltages
+    Serial.print("AUX:   ");
+    for (int i = 0; i < 9; i++)
+    {
+        Serial.print(auxVoltages[i], 4);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
+
 void balanceCells(uint8_t balancePWMs[8], uint8_t timeout)
 {
     // Write the balance PWMs
@@ -407,12 +437,10 @@ void loop()
     // uint8_t balancePWMs[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // all off
     balanceCells(balancePWMs, 0b0011111); // max timeout
 
-    // Read temperatures
-    // Measure command
-    sendCommand(ADAX);
-    delay(10);
+    // Measure AUX voltages
+    uint8_t auxRegisters[] = {RDAUXA, RDAUXB, RDAUXC};
+    measureAuxVoltages(auxRegisters);
 
-    // Read AUX registers
 
     // Read Shunt current
 
